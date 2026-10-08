@@ -28,6 +28,12 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !path.startsWith("/api/auth/") &&
+      typeof window !== "undefined"
+    )
+      window.location.assign("/signin");
     const detail = data.detail;
     throw new Error(
       typeof detail === "string"

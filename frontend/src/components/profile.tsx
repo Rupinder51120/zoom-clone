@@ -1,4 +1,5 @@
 "use client";
+import PasswordSettings from "./password-settings";
 import { useEffect, useState } from "react";
 import { UserRound, ShieldCheck } from "lucide-react";
 import { api, Profile as ProfileType } from "@/lib/api";
@@ -113,6 +114,7 @@ export default function Profile() {
           {error}
         </p>
       )}
+      <PasswordSettings />
     </>
   );
 }

@@ -23,7 +23,6 @@ function JoinForm() {
   const params = useSearchParams();
   const router = useRouter();
   const [value, setValue] = useState("");
-  const [browser, setBrowser] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -53,24 +52,16 @@ function JoinForm() {
     <main className="join-main">
       <h1>Join Meeting</h1>
       <form className="join-form" onSubmit={submit}>
-        <label htmlFor="meeting-id">Meeting ID or Personal Link Name</label>
+        <label htmlFor="meeting-id">Meeting ID or Invite Link</label>
         <input
           id="meeting-id"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Enter Meeting ID or Personal Link Name"
+          placeholder="Enter Meeting ID or Invite Link"
           autoFocus
           autoComplete="off"
           aria-describedby={error ? "join-error" : undefined}
         />
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={browser}
-            onChange={(e) => setBrowser(e.target.checked)}
-          />{" "}
-          Always join from browser
-        </label>
         {error && (
           <p id="join-error" className="error" role="alert">
             {error}

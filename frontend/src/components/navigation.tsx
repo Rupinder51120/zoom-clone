@@ -6,20 +6,13 @@ import {
   ChevronDown,
   Home,
   Video,
-  MessageSquare,
-  Phone,
-  Layers,
-  Contact,
-  PanelTop,
-  FileText,
-  ExternalLink,
   Search,
   X,
   Menu,
   CheckCircle2,
   HelpCircle,
 } from "lucide-react";
-import { startMeeting } from "@/lib/api";
+import { api, Profile, startMeeting } from "@/lib/api";
 
 export function Logo() {
   return (
@@ -29,6 +22,21 @@ export function Logo() {
   );
 }
 export function Header({ portal = false }: { portal?: boolean }) {
+  const [account, setAccount] = useState<Profile | null>(null);
+  useEffect(() => {
+    api<Profile>("/api/auth/me")
+      .then(setAccount)
+      .catch(() => setAccount(null));
+  }, []);
+  async function signout() {
+    try {
+      await api("/api/auth/signout", { method: "POST" });
+      sessionStorage.clear();
+      window.location.assign("/signin");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
   const [menu, setMenu] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -65,20 +73,10 @@ export function Header({ portal = false }: { portal?: boolean }) {
           <a href="https://support.zoom.com" target="_blank" rel="noreferrer">
             <Search size={18} /> Support
           </a>
-          <span>Contact Sales</span>
-          <span>Request a Demo</span>
         </div>
       )}
       <div className="main-header">
         <Logo />
-        {portal && (
-          <nav className="marketing-nav" aria-label="Product navigation">
-            <span>Products</span>
-            <span>Solutions</span>
-            <span>Resources</span>
-            <span>Plans & Pricing</span>
-          </nav>
-        )}
         <nav className="header-actions" aria-label="Meeting navigation">
           <a
             className="support-link"
@@ -125,61 +123,42 @@ export function Header({ portal = false }: { portal?: boolean }) {
                 <Link href="/" onClick={() => setMenu(null)}>
                   <Home size={21} /> Home
                 </Link>
-                {[
-                  ["Chat", MessageSquare],
-                  ["Phone", Phone],
-                  ["Meetings", Video],
-                  ["Hub", Layers],
-                  ["Canvas", FileText],
-                  ["Contacts", Contact],
-                  ["Whiteboards", PanelTop],
-                ].map(([name, Icon]) =>
-                  name === "Meetings" ? (
-                    <Link
-                      key="Meetings"
-                      href="/meetings"
-                      onClick={() => setMenu(null)}
-                    >
-                      <Video size={21} /> Meetings
-                    </Link>
-                  ) : (
-                    <button
-                      key={String(name)}
-                      disabled
-                      title="Outside this assignment's scope"
-                    >
-                      {typeof Icon !== "string" && <Icon size={21} />}{" "}
-                      {String(name)}
-                      <span className="menu-note">Coming soon</span>
-                    </button>
-                  ),
-                )}
-              </div>
-            )}
-          </div>
-          <div className="menu-wrap">
-            <button
-              className="avatar"
-              aria-label="Your profile"
-              aria-expanded={menu === "profile"}
-              onClick={() => setMenu(menu === "profile" ? null : "profile")}
-            >
-              RK
-            </button>
-            {menu === "profile" && (
-              <div className="dropdown profile-dropdown">
-                <Link href="/profile" onClick={() => setMenu(null)}>
-                  My Profile
+                <Link href="/meetings" onClick={() => setMenu(null)}>
+                  <Video size={21} /> Meetings
                 </Link>
-                <button
-                  disabled
-                  title="Settings placeholder for this assignment"
-                >
-                  Settings
-                </button>
               </div>
             )}
           </div>
+          {account ? (
+            <div className="menu-wrap">
+              <button
+                className="avatar"
+                aria-label="Your profile"
+                aria-expanded={menu === "profile"}
+                onClick={() => setMenu(menu === "profile" ? null : "profile")}
+              >
+                {account.display_name
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()}
+              </button>
+              {menu === "profile" && (
+                <div className="dropdown profile-dropdown">
+                  <Link href="/profile" onClick={() => setMenu(null)}>
+                    Account Settings
+                  </Link>
+                  <button onClick={signout}>Sign Out</button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link href="/signin">Sign In</Link>
+              <Link href="/signup">Sign Up Free</Link>
+            </>
+          )}
         </nav>
       </div>
       {error && (
@@ -193,23 +172,6 @@ export function Header({ portal = false }: { portal?: boolean }) {
     </header>
   );
 }
-const products = [
-  "AI",
-  "Meetings",
-  "Recordings",
-  "Summaries",
-  "Hub",
-  "Whiteboards",
-  "Notes",
-  "Clips",
-  "Canvas",
-  "Paper",
-  "Sheets",
-  "Slides",
-  "Tasks",
-  "Scheduler",
-  "Discover More Products",
-];
 export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -225,37 +187,20 @@ export function Sidebar() {
       <aside className={`portal-sidebar ${open ? "is-open" : ""}`}>
         <p className="sidebar-label">My Products</p>
         <nav aria-label="Sidebar">
-          {products.map((name) =>
-            name === "Meetings" ? (
-              <Link
-                key={name}
-                href="/meetings"
-                onClick={() => setOpen(false)}
-                className={pathname.includes("meeting") ? "selected" : ""}
-              >
-                Meetings
-              </Link>
-            ) : (
-              <div className="sidebar-placeholder" key={name}>
-                {name}
-                {["AI", "Hub"].includes(name) && (
-                  <span className="new-badge">New</span>
-                )}
-                {[
-                  "AI",
-                  "Hub",
-                  "Whiteboards",
-                  "Clips",
-                  "Canvas",
-                  "Paper",
-                  "Sheets",
-                  "Slides",
-                  "Tasks",
-                  "Scheduler",
-                ].includes(name) && <ExternalLink size={13} />}
-              </div>
-            ),
-          )}
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            className={pathname === "/" ? "selected" : ""}
+          >
+            <Home size={15} /> Home
+          </Link>
+          <Link
+            href="/meetings"
+            onClick={() => setOpen(false)}
+            className={pathname.includes("meeting") ? "selected" : ""}
+          >
+            <Video size={15} /> Meetings
+          </Link>
           <Link
             href="/profile"
             onClick={() => setOpen(false)}
@@ -320,9 +265,7 @@ export function Footer() {
       >
         Privacy & Legal Policies
       </a>
-      <span className="language">
-        English <ChevronDown size={14} />
-      </span>
+      <span className="language">English</span>
     </footer>
   );
 }

@@ -29,7 +29,7 @@ npm run dev
 
 Open http://localhost:3000. Health: http://localhost:8000/health. Interactive API docs: http://localhost:8000/docs.
 
-Seeds are inserted once on a fresh database: the default user, three upcoming meetings and two completed meetings. Seed dates are relative to initial startup. A restart never overwrites existing meetings. SQLite files are excluded from version control.
+Seeds are inserted once on a fresh database: a demo user, three upcoming meetings and two completed meetings. Seed dates are relative to initial startup. A restart never overwrites existing meetings. SQLite files are excluded from version control.
 
 ## Implemented workflows
 
@@ -40,7 +40,7 @@ Seeds are inserted once on a fresh database: the default user, three upcoming me
 - Real browser WebRTC audio/video through a peer mesh; FastAPI WebSockets carry signaling and participant events.
 - Microphone/camera controls, participant list, browser screen sharing, invite, leave.
 - Server-authorized host commands: mute all, remove participant, end for everyone.
-- Editable default user's display name and timezone; responsive portal and meeting room.
+- Signup/signin/signout, account settings and password changes; account-owned meetings and responsive portal/meeting room.
 - SQLite participant join/leave/removal history and meeting status/start/end timestamps.
 
 ## Architecture and interview explanation
@@ -65,7 +65,17 @@ Meeting creation lives in a service so HTTP handling stays separate from databas
 
 Planning documents, screenshots, agent instructions, test reports, and existing test files stay local through `.gitignore`. They are intentionally excluded from this submission.
 
-The frontend's server-side API proxy injects a server API key. That key is never sent to browser JavaScript. Because the assignment assumes one logged-in user, **every portal visitor acts as that same default user**. This is not a multi-user authentication system. Browser guest joining still receives only guest privileges; host commands require a separately issued room credential and are checked by FastAPI.
+## Authentication
+
+Open `/signup` to create an account or `/signin` to log in. New accounts start with their own empty meeting list. Joining a shared invitation still works without an account. Account pages require a valid session, and meeting lists, creation, scheduling, profile updates and host credential issuance use the signed-in user. Another account cannot reclaim a meeting's host access.
+
+Passwords require 12–128 characters and use salted scrypt hashes. SQLite stores hashed, random session credentials with a seven-day expiry. The Next.js server proxy forwards the session to FastAPI; the browser receives an HttpOnly, SameSite=Lax cookie (Secure in production), never a session token in JSON or localStorage. The gateway key remains server-only and does not itself authorize a user. Signout revokes the current session. Changing a password revokes all account sessions and returns to signin. Room participant credentials remain separate capabilities for the lifetime of a meeting; password changes do not terminate already connected calls.
+
+Signup/signin are limited to ten attempts per normalized email per minute in the single-process API. This is a basic demo throttle, not a distributed abuse-prevention service. Signup conflicts return a generic account-creation error; signin failures do not disclose whether an account exists. Non-GET proxy requests check browser Origin against the configured application origin. Configure `APP_ORIGIN` and HTTPS in production.
+
+To access the seeded meetings, optionally set `DEMO_PASSWORD` (at least 12 characters) in the backend environment before startup, then sign in as `demo@example.com`. There is no built-in demo password or automatic login. A pre-existing seed user's missing password is provisioned only through this trusted environment setting; existing credentials are never overwritten. Alternatively, use your own new account. Existing meeting ownership is preserved by Alembic migration 002.
+
+Email/password authentication is implemented. Email verification, forgotten-password email recovery, OAuth/social login and MFA are not implemented. No verification or recovery emails are sent. These require a separately configured workflow/provider; the reference social-login buttons and email-code screens are not presented as working features.
 
 ## Verification
 
@@ -91,7 +101,7 @@ npm run test:e2e
 
 Run `npm run format` to apply the frontend formatting conventions. `.editorconfig` sets shared whitespace rules. With Ruff installed, use `ruff check app migrations` and `ruff format --check app migrations` from `backend`.
 
-Browser integration tests expect both servers already running on ports 3000/8000. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
+Browser integration tests expect both servers already running on ports 3000/8000. The auth suite creates and removes isolated test accounts; older feature suites require authenticated setup after this change. Historical results for the earlier default-user mode are not a claim that those browser fixtures were rerun unchanged. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
 
 Manual acceptance: open two browser profiles/devices, start a meeting, copy its invitation, join as a guest, speak, toggle cameras, share a screen, stop sharing, mute all, remove a participant and end the meeting. Test denied permissions and different networks before submission.
 
@@ -124,11 +134,11 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/zoom-playwright npm run test:e2e
 ## Assumptions and limitations
 
 - Small demo meetings; no Zoom-scale participant or reliability claim. Peer mesh bandwidth grows with participant count.
-- No signup, OAuth, verification email, recording, phone dialing, recurring meetings, waiting rooms, calendar email delivery, chat or whiteboard. Unrelated reference navigation is decorative/disabled with a scope label.
+- No OAuth, email verification/recovery, MFA, recording, phone dialing, recurring meetings, waiting rooms, calendar email delivery, chat or whiteboard. Unrelated reference navigation and nonfunctional controls are omitted.
 - All calls happen in the browser. Camera/microphone access needs HTTPS (localhost is allowed); browser screen sharing requires a user action and may not be supported on mobile.
 - Host mute requests are honored by this client; no peer mesh implementation can prevent a modified malicious client from transmitting audio. Hosts cannot remotely enable another person's microphone.
 - Removing a participant invalidates that participant session. With anonymous names and a shared invitation, a person can join again with a new guest session; persistent identity-based bans require authentication.
-- Leaving as host does not end the meeting. The default user can reclaim host access from the portal. End-for-everyone permanently closes that meeting.
+- Leaving as host does not end the meeting. The meeting owner can reclaim host access from the portal. End-for-everyone permanently closes that meeting.
 - Duration describes the planned meeting length; it does not automatically terminate a live call or enforce subscription limits.
 - Socket disconnection closes the call and offers rejoin. There is no automatic reconnection that silently reuses a closed participant session.
 - Brand visuals are used for an assignment demo. Footer identifies this implementation as a clone.

@@ -18,7 +18,9 @@ class MeetingIdUnavailable(Exception):
     """No unused meeting ID could be allocated within the retry limit."""
 
 
-def create_meeting(db: Session, body: MeetingCreate) -> tuple[Meeting, str]:
+def create_meeting(
+    db: Session, body: MeetingCreate, host_user_id: int
+) -> tuple[Meeting, str]:
     """Persist a meeting; return its record and the once-issued host credential.
 
     The unique database constraint is authoritative. A precheck avoids an insert
@@ -32,7 +34,7 @@ def create_meeting(db: Session, body: MeetingCreate) -> tuple[Meeting, str]:
             continue
         meeting = Meeting(
             code=code,
-            host_user_id=1,
+            host_user_id=host_user_id,
             title=body.title,
             description=body.description,
             scheduled_start=body.scheduled_start.astimezone(timezone.utc).isoformat()

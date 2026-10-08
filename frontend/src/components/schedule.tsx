@@ -206,10 +206,7 @@ export default function Schedule() {
         <div className="form-row">
           <span className="row-label">Meeting ID</span>
           <div className="field-content">
-            <label className="checkbox-label">
-              <input type="radio" checked readOnly />
-              Generate Automatically
-            </label>
+            <p>Generate Automatically</p>
             <p className="form-hint">
               A unique meeting ID and invitation link are created when you save.
             </p>
@@ -237,10 +234,7 @@ export default function Schedule() {
         <div className="form-row">
           <span className="row-label">Audio</span>
           <div className="field-content">
-            <label className="checkbox-label">
-              <input type="radio" checked readOnly />
-              Computer Audio
-            </label>
+            <p>Computer Audio</p>
           </div>
         </div>
         <div className="notice">

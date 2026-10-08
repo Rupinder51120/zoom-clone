@@ -10,12 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .auth import router as auth_router
 from .config import settings
 from .db import SessionLocal, get_db
 from .models import Meeting, Participant, User, utc_now
 from .rooms import Connection, registry
 from .schemas import JoinRequest, MeetingCreate, ProfileUpdate
-from .security import digest, require_default_user
+from .security import current_user, digest
 from .seed import seed
 from .services.meetings import MeetingIdUnavailable
 from .services.meetings import create_meeting as persist_meeting
@@ -40,6 +41,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 app = FastAPI(title="Zoom Clone API", lifespan=lifespan)
+app.include_router(auth_router)
 origins = [s.strip() for s in settings.allowed_origins.split(",") if s.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -85,9 +87,8 @@ def health(db: DbSession):
     return {"status": "ok"}
 
 
-@app.get("/api/profile", dependencies=[Depends(require_default_user)])
-def profile(db: DbSession):
-    user = db.get(User, 1)
+@app.get("/api/profile")
+def profile(db: DbSession, user: User = Depends(current_user)):
     return {
         "display_name": user.display_name,
         "email": user.email,
@@ -95,30 +96,35 @@ def profile(db: DbSession):
     }
 
 
-@app.patch("/api/profile", dependencies=[Depends(require_default_user)])
-def update_profile(body: ProfileUpdate, db: DbSession):
-    user = db.get(User, 1)
+@app.patch("/api/profile")
+def update_profile(
+    body: ProfileUpdate, db: DbSession, user: User = Depends(current_user)
+):
     user.display_name, user.timezone = body.display_name, body.timezone
     db.commit()
-    return profile(db)
+    return profile(db, user)
 
 
-@app.get("/api/meetings", dependencies=[Depends(require_default_user)])
-def meetings(db: DbSession):
+@app.get("/api/meetings")
+def meetings(db: DbSession, user: User = Depends(current_user)):
     return [
         serialize(m)
-        for m in db.scalars(select(Meeting).order_by(Meeting.created_at.desc()))
+        for m in db.scalars(
+            select(Meeting)
+            .where(Meeting.host_user_id == user.id)
+            .order_by(Meeting.created_at.desc())
+        )
     ]
 
 
-@app.post(
-    "/api/meetings", status_code=201, dependencies=[Depends(require_default_user)]
-)
-def create_meeting(body: MeetingCreate, db: DbSession):
+@app.post("/api/meetings", status_code=201)
+def create_meeting(
+    body: MeetingCreate, db: DbSession, user: User = Depends(current_user)
+):
     if body.scheduled_start and body.scheduled_start <= datetime.now(timezone.utc):
         raise HTTPException(422, "Choose a future date and time")
     try:
-        meeting, token = persist_meeting(db, body)
+        meeting, token = persist_meeting(db, body, user.id)
     except MeetingIdUnavailable:
         raise HTTPException(503, "Unable to allocate a meeting ID. Please try again.")
     return serialize(meeting) | {"host_token": token}
@@ -129,9 +135,11 @@ def meeting_details(code: str, db: DbSession):
     return serialize(find_meeting(db, code))
 
 
-@app.post("/api/meetings/{code}/host", dependencies=[Depends(require_default_user)])
-def host_meeting(code: str, db: DbSession):
+@app.post("/api/meetings/{code}/host")
+def host_meeting(code: str, db: DbSession, user: User = Depends(current_user)):
     meeting = find_meeting(db, code)
+    if meeting.host_user_id != user.id:
+        raise HTTPException(403, "Only the meeting owner can host this meeting")
     if meeting.status == "ended":
         raise HTTPException(410, "This meeting has ended")
     if any(
@@ -158,7 +166,7 @@ def join_meeting(code: str, body: JoinRequest, db: DbSession):
     participant = Participant(
         id=str(uuid.uuid4()),
         meeting_id=meeting.id,
-        user_id=1 if is_host else None,
+        user_id=meeting.host_user_id if is_host else None,
         display_name=body.display_name,
         role="host" if is_host else "guest",
         token_hash=digest(token),

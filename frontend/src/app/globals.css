@@ -1695,3 +1695,108 @@ textarea {
     display: none;
   }
 }
+
+/* Account pages follow the reference's public header and two-column form. */
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88px;
+  padding: 20px 4%;
+  border-bottom: 1px solid #e5e7eb;
+}
+.auth-header nav {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.auth-content {
+  display: grid;
+  grid-template-columns: 39% 61%;
+  min-height: calc(100vh - 88px);
+}
+.auth-aside {
+  background: #f7f8f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+  padding: 40px;
+  color: #2d8cff;
+}
+.auth-benefits {
+  background: white;
+  color: #232323;
+  padding: 32px;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px #0002;
+}
+.auth-benefits p {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+  align-items: center;
+}
+.auth-benefits svg {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+.auth-panel {
+  width: min(100%, 540px);
+  margin: auto;
+  padding: 60px 30px;
+}
+.auth-panel h1 {
+  text-align: center;
+  font-size: 40px;
+  margin-bottom: 44px;
+}
+.auth-form,
+.password-settings form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.auth-form .primary {
+  margin-top: 16px;
+  min-height: 48px;
+}
+.password-field {
+  position: relative;
+}
+.password-field input {
+  width: 100%;
+  padding-right: 48px;
+}
+.password-field button {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+.password-settings {
+  margin-top: 48px;
+  max-width: 500px;
+}
+.password-settings form {
+  margin-top: 20px;
+}
+@media (max-width: 800px) {
+  .auth-content {
+    grid-template-columns: 1fr;
+  }
+  .auth-aside {
+    display: none;
+  }
+  .auth-header nav {
+    gap: 12px;
+    font-size: 13px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .auth-panel {
+    padding: 40px 24px;
+  }
+}

@@ -15,6 +15,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     display_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(254), unique=True)
+    password_hash: Mapped[str | None] = mapped_column(Text)
     timezone: Mapped[str] = mapped_column(String(80), default="Asia/Kolkata")
     created_at: Mapped[str] = mapped_column(default=utc_now)
     meetings: Mapped[list["Meeting"]] = relationship(back_populates="host")
@@ -54,3 +55,11 @@ class Participant(Base):
     left_at: Mapped[str | None]
     removed_at: Mapped[str | None]
     meeting: Mapped[Meeting] = relationship(back_populates="participants")
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[str]

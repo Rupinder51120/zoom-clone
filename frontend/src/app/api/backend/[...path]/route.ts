@@ -24,6 +24,7 @@ async function proxy(
         method: request.method,
         headers: {
           "Content-Type": "application/json",
+          "X-Session-Token": request.cookies.get("zoom_session")?.value || "",
           "X-Host-Api-Key":
             process.env.HOST_API_KEY || "local-development-only",
         },
@@ -32,10 +33,36 @@ async function proxy(
         signal: AbortSignal.timeout(15000),
       },
     );
-    return new NextResponse(await response.text(), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    });
+    const data = await response.json();
+    const sessionToken = data.session_token;
+    const maxAge = data.max_age;
+    delete data.session_token;
+    delete data.max_age;
+    const result = NextResponse.json(data, { status: response.status });
+    result.headers.set("Cache-Control", "no-store");
+    if (response.ok && sessionToken) {
+      result.cookies.set("zoom_session", sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge,
+      });
+    }
+    if (
+      response.ok &&
+      path[1] === "auth" &&
+      ["signout", "password"].includes(path[2])
+    ) {
+      result.cookies.set("zoom_session", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 0,
+      });
+    }
+    return result;
   } catch {
     return NextResponse.json(
       {
