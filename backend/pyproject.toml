@@ -6,7 +6,7 @@ select = ["E4", "E7", "E9", "F", "I"]
 
 [tool.ruff.lint.per-file-ignores]
 # Test DB environment must be configured before importing the application.
-"tests/test_meetings.py" = ["E402"]
+"tests/conftest.py" = ["E402"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

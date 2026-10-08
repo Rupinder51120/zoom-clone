@@ -45,13 +45,31 @@ Seeds are inserted once on a fresh database: the default user, three upcoming me
 
 ## Architecture and interview explanation
 
-Local architecture notes and verification results are in `docs/architecture.md` and `docs/verification.md`. Planning documents, screenshots, agent instructions, and existing test files are excluded from the GitHub submission through `.gitignore`; they remain available in the development workspace.
+```text
+frontend/
+  src/app/          Pages, portal layouts, and the server API proxy
+  src/components/   Dashboard, navigation, forms, and meeting room UI
+  src/hooks/        Browser media lifecycle and WebRTC signaling
+  src/lib/          API contracts, invitations, and client helpers
+backend/
+  app/main.py       HTTP routes and WebSocket admission/events
+  app/services/     Meeting creation and ID allocation
+  app/models.py     SQLAlchemy users, meetings, and participant history
+  app/schemas.py    Request validation
+  app/rooms.py      In-memory connected-room registry
+  migrations/       Versioned SQLite schema
+render.yaml         Backend deployment and persistent disk configuration
+```
+
+Meeting creation lives in a service so HTTP handling stays separate from database allocation. IDs are generated with Python's `secrets`, checked for existing records, and enforced by a unique database constraint. An insertion collision rolls back and retries, with a bounded attempt limit; unrelated integrity errors are not masked. The host credential is returned once during creation and stored as a hash in SQLite.
+
+Planning documents, screenshots, agent instructions, test reports, and existing test files stay local through `.gitignore`. They are intentionally excluded from this submission.
 
 The frontend's server-side API proxy injects a server API key. That key is never sent to browser JavaScript. Because the assignment assumes one logged-in user, **every portal visitor acts as that same default user**. This is not a multi-user authentication system. Browser guest joining still receives only guest privileges; host commands require a separately issued room credential and are checked by FastAPI.
 
 ## Verification
 
-The commands below apply to the local development workspace. The existing test suites and Playwright configuration are intentionally excluded from the GitHub submission. Production build and type checks are available in a fresh checkout.
+The commands below apply to the local development workspace. The existing test suites and Playwright configuration are intentionally excluded from the GitHub submission. Production build, type checks, and formatting checks are available in a fresh checkout. Python lint/format checks require installing Ruff separately.
 
 Backend:
 
@@ -65,10 +83,13 @@ Frontend:
 ```bash
 cd frontend
 npm run typecheck
+npm run format:check
 npm run build
 npx playwright install chromium
 npm run test:e2e
 ```
+
+Run `npm run format` to apply the frontend formatting conventions. `.editorconfig` sets shared whitespace rules. With Ruff installed, use `ruff check app migrations` and `ruff format --check app migrations` from `backend`.
 
 Browser integration tests expect both servers already running on ports 3000/8000. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
 

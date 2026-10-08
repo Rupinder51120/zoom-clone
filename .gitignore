@@ -5,6 +5,10 @@ node_modules/
 __pycache__/
 *.py[cod]
 *.tsbuildinfo
+/frontend/next-env.d.ts
+dist/
+out/
+build/
 
 # Local database and environment secrets (keep example configuration)
 *.db
@@ -16,13 +20,20 @@ __pycache__/
 # Local planning, assignment references, progress notes, and screenshots
 /docs/
 /domain.txt
+/v2.txt
 AGENTS.md
 CLAUDE.md
 
 # Local test suites, configuration, reports, and caches
-/backend/tests/
-/frontend/tests/
-/frontend/playwright.config.ts
+tests/
+__tests__/
+test_*.py
+*_test.py
+*.test.*
+*.spec.*
+playwright*.config.*
+vitest.config.*
+jest.config.*
 .pytest_cache/
 .ruff_cache/
 .coverage
@@ -32,6 +43,9 @@ htmlcov/
 test-results/
 playwright-report/
 playwright/.cache/
+artifacts/
+blob-report/
+.cache/
 
 # Editor and operating-system artifacts
 .DS_Store
