@@ -54,6 +54,7 @@ class Participant(Base):
     display_name: Mapped[str] = mapped_column(String(100))
     role: Mapped[str] = mapped_column(String(10), default="guest")
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    host_admission_hash: Mapped[str | None] = mapped_column(String(64))
     joined_at: Mapped[str | None]
     left_at: Mapped[str | None]
     removed_at: Mapped[str | None]

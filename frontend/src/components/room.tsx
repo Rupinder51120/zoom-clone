@@ -259,9 +259,17 @@ export default function Room({
           <Link className="primary" href="/">
             Back to Home
           </Link>
-          {meeting?.status !== "ended" && (
+          {!call.meetingEnded && meeting?.status !== "ended" && (
             <p>
-              <Link href={`/join?meeting=${code}`}>Rejoin meeting</Link>
+              <a
+                href={
+                  hostMode && hostToken
+                    ? `/room/${code}?host=1`
+                    : `/join?meeting=${code}`
+                }
+              >
+                Rejoin meeting
+              </a>
             </p>
           )}
         </div>

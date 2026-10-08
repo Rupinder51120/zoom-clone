@@ -1,4 +1,3 @@
-import json
 import secrets
 import uuid
 from contextlib import asynccontextmanager
@@ -137,20 +136,22 @@ def meeting_details(code: str, db: DbSession):
 
 
 @app.post("/api/meetings/{code}/host")
-def host_meeting(code: str, db: DbSession, user: User = Depends(portal_user)):
-    meeting = find_meeting(db, code)
-    if meeting.host_user_id != user.id:
-        raise HTTPException(403, "Only the meeting owner can host this meeting")
-    if meeting.status == "ended":
-        raise HTTPException(410, "This meeting has ended")
-    if any(
-        c.participant["role"] == "host" for c in registry.rooms.get(code, {}).values()
-    ):
-        raise HTTPException(409, "This meeting already has a connected host")
-    token = secrets.token_urlsafe(32)
-    meeting.host_token_hash = digest(token)
-    db.commit()
-    return {"host_token": token, "video_on": meeting.video_on}
+async def host_meeting(code: str, db: DbSession, user: User = Depends(portal_user)):
+    async with registry.lock:
+        meeting = find_meeting(db, code)
+        if meeting.host_user_id != user.id:
+            raise HTTPException(403, "Only the meeting owner can host this meeting")
+        if meeting.status == "ended":
+            raise HTTPException(410, "This meeting has ended")
+        if any(
+            c.participant["role"] == "host"
+            for c in registry.rooms.get(code, {}).values()
+        ):
+            raise HTTPException(409, "This meeting already has a connected host")
+        token = secrets.token_urlsafe(32)
+        meeting.host_token_hash = digest(token)
+        db.commit()
+        return {"host_token": token, "video_on": meeting.video_on}
 
 
 @app.post("/api/meetings/{code}/join")
@@ -171,6 +172,7 @@ def join_meeting(code: str, body: JoinRequest, db: DbSession):
         display_name=body.display_name,
         role="host" if is_host else "guest",
         token_hash=digest(token),
+        host_admission_hash=meeting.host_token_hash if is_host else None,
     )
     db.add(participant)
     db.commit()
@@ -178,7 +180,7 @@ def join_meeting(code: str, body: JoinRequest, db: DbSession):
         "participant_id": participant.id,
         "token": token,
         "role": participant.role,
-        "ice_servers": json.loads(settings.ice_servers_json),
+        "ice_servers": settings.ice_servers,
     }
 
 
@@ -190,6 +192,7 @@ async def meeting_socket(socket: WebSocket, code: str):
         return
     await socket.accept()
     participant_id = None
+    registered = False
     try:
         import asyncio
 
@@ -211,6 +214,10 @@ async def meeting_socket(socket: WebSocket, code: str):
                     or participant.meeting_id != meeting.id
                     or participant.removed_at
                     or participant.left_at
+                    or (
+                        participant.role == "host"
+                        and participant.host_admission_hash != meeting.host_token_hash
+                    )
                     or meeting.status == "ended"
                 ):
                     await socket.close(code=4403)
@@ -245,6 +252,7 @@ async def meeting_socket(socket: WebSocket, code: str):
                     }
                 )
                 room[participant_id] = Connection(socket, peer)
+                registered = True
                 await registry.broadcast(
                     code,
                     {"type": "participant_joined", "participant": peer},
@@ -386,7 +394,7 @@ async def meeting_socket(socket: WebSocket, code: str):
     except (WebSocketDisconnect, TimeoutError, ValueError, RuntimeError):
         pass
     finally:
-        if participant_id:
+        if registered and participant_id:
             async with registry.lock:
                 room = registry.rooms.get(code, {})
                 was_connected = room.pop(participant_id, None) is not None

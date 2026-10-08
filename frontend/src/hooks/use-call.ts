@@ -82,6 +82,7 @@ export function useCall({
   const [status, setStatus] = useState("Connecting");
   const [notice, setNotice] = useState("");
   const [finished, setFinished] = useState("");
+  const [meetingEnded, setMeetingEnded] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const pcs = useRef(new Map<string, PeerConnection>());
   const local = useRef({ stream, audio, video, screen });
@@ -236,6 +237,7 @@ export function useCall({
           setFinished("You were removed from this meeting by the host.");
           break;
         case "ended":
+          setMeetingEnded(true);
           ended.current = true;
           setFinished("The host ended this meeting.");
           break;
@@ -387,6 +389,7 @@ export function useCall({
     notice,
     setNotice,
     finished,
+    meetingEnded,
     send,
     leave,
   };
