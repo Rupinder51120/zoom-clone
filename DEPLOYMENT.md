@@ -10,6 +10,14 @@
 
 Comprehensive test sources, browser configurations and generated results remain gitignored. CI runs the included `backend/ci/verify.py` smoke verification, not the full local suites or browser/device tests. The script creates and removes its own temporary database.
 
+## Current deployed services
+
+- Frontend: https://zoom-clone-bice-mu.vercel.app
+- Backend: https://zoom-clone-production-8be6.up.railway.app
+- Verified on 9 October 2026: public health 200 OK, seeded dashboard data, instant creation, host WebSocket admission and end-for-everyone (media disabled). Physical-device and TURN verification remain pending.
+- The current GitHub-imported Railway service uses `/backend` as Root Directory and `Dockerfile` as its build path, with one replica and a `/data` volume. Vercel uses `frontend`.
+- The CLI archive workflow below expects an empty Railway Root Directory. Do not enable that workflow against the current `/backend` service without first reconciling the upload root. Production Actions credentials/automation have not been verified.
+
 ## 1. Create Railway backend
 
 Create a Railway project with a backend service and a production environment. Generate a public domain. The workflow uploads **only `backend/` as the archive root**; keep the Railway service Root Directory empty (`/`), use `railway.json` at that archive root, and do not set a conflicting dashboard start command.

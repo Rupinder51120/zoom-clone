@@ -5,7 +5,8 @@ schedule meetings, and make real audio/video calls. The interface follows the su
 references, with a navigation rail, centered meeting actions, modal Join/Schedule flows and a compact call toolbar.
 
 - **Repository:** [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone)
-- **Live demo:** Deployment pending; no verified public application URL yet.
+- **Live demo:** [ZOOM-CLONE](https://zoom-clone-bice-mu.vercel.app)
+- **API health:** [Railway health endpoint](https://zoom-clone-production-8be6.up.railway.app/health)
 - **Stack:** Next.js 16 (TypeScript) · FastAPI (Python) · SQLite · SQLAlchemy 2 · Alembic · WebRTC · WebSockets
 - **Verification:** Latest local acceptance run on 9 October 2026: **60 backend tests and 9 production-browser tests passed**. Synthetic media devices were used; physical-device and cross-network testing remain pending.
 - **Feature checklist:** [corefeatures.md](corefeatures.md)
@@ -373,9 +374,9 @@ toggle cameras, share/stop sharing, mute, remove and end the meeting.
 
 ## Deployment
 
-Target: **Vercel frontend + Railway backend with persistent SQLite storage**. Deployment configuration
-exists, but the public deployment has not been verified. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the
-complete setup, service-root rules and GitHub Actions credentials.
+Live deployment: **Vercel frontend + Railway backend with persistent SQLite storage**. On 9 October 2026, public API health returned 200 OK, the dashboard loaded seeded data, and instant creation → host admission → secure WebSocket connection → end-for-everyone passed a hosted browser smoke check with audio/video disabled. This does not verify real-device media. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for setup and release instructions.
+
+The current Railway GitHub import uses Root Directory `/backend`, Dockerfile `Dockerfile`, one replica, `/health`, and a volume at `/data`. Vercel imports only `frontend`. Railway `FRONTEND_URL` and `ALLOWED_ORIGINS` use `https://zoom-clone-bice-mu.vercel.app`. The gateway secret stays server-only. GitHub Actions deployment credentials and release automation have not been verified against these accounts.
 
 | Service | Required setup |
 |---|---|
@@ -425,7 +426,7 @@ also contains a Render alternative (`render.yaml`); Railway is the target of the
 
 ## Known limitations and future work
 
-- Public deployment, physical-device testing and cross-network TURN verification remain pending.
+- Physical-device testing and cross-network TURN verification remain pending. Hosted scheduling, optional authentication and multi-participant media still need a full deployed acceptance run.
 - STUN alone cannot ensure restrictive-network connectivity. Camera/microphone access needs HTTPS
   (localhost is allowed); screen sharing requires a user gesture and browser support.
 - Peer mesh bandwidth grows with participant count. No tested participant limit or reliability guarantee is claimed.

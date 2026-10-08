@@ -96,10 +96,10 @@ These entries describe UI placeholders, not implemented product capabilities.
 - [x] Public GitHub repository: [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone), visibility verified during the audit.
 - [x] Production frontend build, TypeScript, Prettier, Ruff and backend CI smoke verification passed locally.
 - [x] Railway/Vercel deployment configuration and GitHub Actions workflows exist.
-- [ ] Latest working-tree fixes and documentation committed/pushed after approval.
-- [ ] Railway persistent volume, domains and production secrets verified in the actual cloud account.
-- [ ] Approved deployment completed and public frontend/backend connectivity verified.
-- [ ] Working deployed application URL submitted with the GitHub URL.
+- [x] Application fixes and submission documentation committed/pushed; deployment documentation updated with public URLs.
+- [x] Railway persistent volume at `/data`, public domain, and configured server gateway key verified through deployed host admission.
+- [x] Vercel/Railway deployment completed: dashboard data, instant creation, host admission, secure WebSocket connection and end-for-everyone verified without media.
+- [x] Working deployed application URL included in README: https://zoom-clone-bice-mu.vercel.app
 - [ ] Author's interview readiness: explain each implementation decision and submitted code.
 
-**Submission readiness:** local mandatory workflows verified; deployment and physical-device acceptance remain pending.
+**Submission readiness:** local mandatory workflows and hosted smoke flow verified. Physical-device media, cross-network TURN and full hosted acceptance remain pending. GitHub Actions production release automation is configured in source but not verified with cloud credentials.

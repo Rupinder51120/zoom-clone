@@ -57,3 +57,12 @@ test-results*/
 # Deployment CLI project metadata
 .vercel/
 .railway/
+
+# Private notes and text artifacts; retain submission docs and dependency manifests
+*.md
+*.txt
+!/README.md
+!/DEPLOYMENT.md
+!/corefeatures.md
+!/backend/requirements.txt
+!/backend/requirements.lock.txt
