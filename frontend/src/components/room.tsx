@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { PlaceholderControl } from "./placeholder-control";
 import { useEffect, useRef, useState } from "react";
 import {
   Video,
@@ -16,7 +17,15 @@ import {
   Check,
   ArrowLeft,
   LoaderCircle,
+  MessageSquare,
+  Smile,
+  Hand,
+  Ellipsis,
+  Info,
+  Settings,
+  OctagonX,
 } from "lucide-react";
+import { MeetingChat } from "./meeting-chat";
 import { Header } from "./navigation";
 import { api, Meeting, Profile, Peer, formatCode, copyInvite } from "@/lib/api";
 import { useMedia } from "@/hooks/use-media";
@@ -60,10 +69,12 @@ function VideoTile({
   peer,
   stream,
   local = false,
+  reaction,
 }: {
   peer: Peer;
   stream: MediaStream | null;
   local?: boolean;
+  reaction?: string;
 }) {
   return (
     <div
@@ -76,7 +87,22 @@ function VideoTile({
         className={!peer.video && !peer.sharing ? "hidden-video" : ""}
       />
       {!peer.video && !peer.sharing && (
-        <div className="tile-avatar">{initials(peer.display_name)}</div>
+        <div className="tile-avatar">
+          <span className="avatar-initials">{initials(peer.display_name)}</span>
+        </div>
+      )}
+      {peer.hand_raised && (
+        <span
+          className="tile-hand"
+          aria-label={`${peer.display_name} raised hand`}
+        >
+          ✋
+        </span>
+      )}
+      {reaction && (
+        <span className="tile-reaction" role="status">
+          {reaction}
+        </span>
       )}
       {peer.sharing && <span className="tile-status">Sharing screen</span>}
       <span className="tile-name">
@@ -90,11 +116,13 @@ function VideoTile({
 export default function Room({
   code,
   initialVideo = true,
+  initialAudio = true,
   hostMode = false,
   screenOnly = false,
 }: {
   code: string;
   initialVideo?: boolean;
+  initialAudio?: boolean;
   hostMode?: boolean;
   screenOnly?: boolean;
 }) {
@@ -104,12 +132,19 @@ export default function Room({
   const [hostToken, setHostToken] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [seenMessages, setSeenMessages] = useState<string | undefined>();
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [screen, setScreen] = useState<MediaStream | null>(null);
   const screenRef = useRef<MediaStream | null>(null);
   const [sharingBusy, setSharingBusy] = useState(false);
-  const media = useMedia(initialVideo);
+  const media = useMedia(initialVideo, initialAudio);
   const call = useCall({
     code,
     name,
@@ -121,6 +156,9 @@ export default function Room({
     screen,
     onMute: media.mute,
   });
+  useEffect(() => {
+    if (chatOpen) setSeenMessages(call.chat.at(-1)?.id);
+  }, [chatOpen, call.chat]);
   useEffect(() => {
     api<Meeting>(`/api/meetings/${code}`)
       .then((m) => {
@@ -208,6 +246,7 @@ export default function Room({
     audio: media.audio,
     video: media.video,
     sharing: !!screen,
+    hand_raised: call.handRaised,
   };
   const allPeers = [selfPeer, ...call.peers];
   if (call.finished)
@@ -385,11 +424,17 @@ export default function Room({
       )}
       <div className="room-main">
         <div className={`video-grid ${call.peers.length === 0 ? "solo" : ""}`}>
-          <VideoTile peer={selfPeer} stream={screen || media.stream} local />
+          <VideoTile
+            peer={selfPeer}
+            stream={screen || media.stream}
+            local
+            reaction={call.reactions[selfPeer.id]?.emoji}
+          />
           {call.peers.map((p) => (
             <VideoTile
               key={p.id}
               peer={p}
+              reaction={call.reactions[p.id]?.emoji}
               stream={call.remoteStreams[p.id] || null}
             />
           ))}
@@ -421,6 +466,12 @@ export default function Room({
                   <div className="participant-name">
                     {p.display_name}
                     {p.id === selfPeer.id ? " (You)" : ""}
+                    {p.hand_raised && (
+                      <span aria-label={`${p.display_name} raised hand`}>
+                        {" "}
+                        ✋
+                      </span>
+                    )}
                     <small>{p.role === "host" ? "Host" : "Guest"}</small>
                   </div>
                   <div className="participant-actions">
@@ -454,6 +505,14 @@ export default function Room({
             </div>
           </aside>
         )}
+        {chatOpen && (
+          <MeetingChat
+            messages={call.chat}
+            connected={call.status === "Connected"}
+            onSend={(text) => call.send({ type: "chat", text })}
+            onClose={() => setChatOpen(false)}
+          />
+        )}
       </div>
       <footer className="room-toolbar">
         <button
@@ -477,7 +536,10 @@ export default function Room({
         <div className="toolbar-spacer" />
         <button
           className={`toolbar-control ${participantsOpen ? "selected" : ""}`}
-          onClick={() => setParticipantsOpen(!participantsOpen)}
+          onClick={() => {
+            setParticipantsOpen(!participantsOpen);
+            setChatOpen(false);
+          }}
         >
           <Users size={24} />
           <span>Participants ({allPeers.length})</span>
@@ -490,15 +552,243 @@ export default function Room({
           {sharingBusy ? <LoaderCircle size={24} /> : <MonitorUp size={24} />}
           <span>{screen ? "Stop Share" : "Share Screen"}</span>
         </button>
+        <button
+          className={`toolbar-control ${chatOpen ? "selected" : ""}`}
+          onClick={() => {
+            setChatOpen(!chatOpen);
+            setParticipantsOpen(false);
+          }}
+        >
+          <MessageSquare size={24} />
+          <span>
+            Chat
+            {!chatOpen &&
+            call.chat.length > 0 &&
+            call.chat.at(-1)?.id !== seenMessages
+              ? " •"
+              : ""}
+          </span>
+        </button>
+        <button
+          className={`toolbar-control ${call.handRaised ? "selected" : ""}`}
+          disabled={call.status !== "Connected"}
+          onClick={() => call.send({ type: "hand", raised: !call.handRaised })}
+        >
+          <Hand size={24} />
+          <span>{call.handRaised ? "Lower Hand" : "Raise Hand"}</span>
+        </button>
+        <div className="reactions-control">
+          <button
+            className="toolbar-control"
+            aria-expanded={reactionsOpen}
+            onClick={() => setReactionsOpen(!reactionsOpen)}
+            disabled={call.status !== "Connected"}
+          >
+            <Smile size={24} />
+            <span>Reactions</span>
+          </button>
+          {reactionsOpen && (
+            <div className="reaction-picker" aria-label="Choose reaction">
+              {[
+                ["👍", "Thumbs up"],
+                ["👏", "Clap"],
+                ["❤️", "Heart"],
+                ["😂", "Laugh"],
+                ["🎉", "Celebrate"],
+                ["😮", "Surprised"],
+              ].map(([emoji, label]) => (
+                <button
+                  key={emoji}
+                  aria-label={label}
+                  onClick={() => {
+                    call.send({ type: "reaction", emoji });
+                    setReactionsOpen(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button className="toolbar-control invite-control" onClick={copy}>
           {copied ? <Check size={23} /> : <Copy size={23} />}
           <span>{copied ? "Copied" : "Invite"}</span>
         </button>
+        {call.self?.role === "host" && (
+          <div className="reactions-control">
+            <button
+              className="toolbar-control"
+              aria-expanded={toolsOpen}
+              onClick={() => {
+                setToolsOpen(!toolsOpen);
+                setMoreOpen(false);
+              }}
+            >
+              <ShieldCheck size={24} />
+              <span>Host tools</span>
+            </button>
+            {toolsOpen && (
+              <div className="room-popover">
+                <button
+                  onClick={() => {
+                    call.send({ type: "mute_all" });
+                    setToolsOpen(false);
+                  }}
+                >
+                  Mute all participants
+                </button>
+                <button
+                  onClick={() => {
+                    setParticipantsOpen(true);
+                    setChatOpen(false);
+                    setToolsOpen(false);
+                  }}
+                >
+                  Manage participants
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="reactions-control">
+          <button
+            className="toolbar-control"
+            aria-expanded={moreOpen}
+            onClick={() => {
+              setMoreOpen(!moreOpen);
+              setToolsOpen(false);
+            }}
+          >
+            <Ellipsis size={24} />
+            <span>More</span>
+          </button>
+          {moreOpen && (
+            <div className="room-popover room-more-grid">
+              {[
+                "Record",
+                "Show caption",
+                "Breakout rooms",
+                "Docs",
+                "Whiteboards",
+                "Apps",
+              ].map((label) => (
+                <PlaceholderControl key={label} label={label} />
+              ))}
+              <button
+                onClick={() => {
+                  setInfoOpen(true);
+                  setMoreOpen(false);
+                }}
+              >
+                <Info size={18} /> Meeting info
+              </button>
+              <button
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setMoreOpen(false);
+                }}
+              >
+                <Settings size={18} /> Device settings
+              </button>
+              <button
+                onClick={() => {
+                  void copy();
+                  setMoreOpen(false);
+                }}
+              >
+                <Copy size={18} /> Copy invitation
+              </button>
+            </div>
+          )}
+        </div>
         <div className="toolbar-spacer" />
         <button className="leave-button" onClick={() => setLeaveOpen(true)}>
-          {call.self?.role === "host" ? "End" : "Leave"}
+          <OctagonX size={25} />
+          <span>{call.self?.role === "host" ? "End" : "Leave"}</span>
         </button>
       </footer>
+      {(infoOpen || settingsOpen) && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={infoOpen ? "Meeting info" : "Device settings"}
+        >
+          <div className="modal room-settings">
+            <button
+              className="dialog-close"
+              aria-label="Close meeting dialog"
+              onClick={() => {
+                setInfoOpen(false);
+                setSettingsOpen(false);
+              }}
+            >
+              <X size={20} />
+            </button>
+            <h2>{infoOpen ? "Meeting info" : "Device settings"}</h2>
+            {infoOpen ? (
+              <>
+                <p>{meeting?.title}</p>
+                <p>Meeting ID: {formatCode(code)}</p>
+                <p className="muted">
+                  {allPeers.length} participants · {call.status}
+                </p>
+                <button className="primary" onClick={copy}>
+                  {copied ? "Copied" : "Copy Invitation"}
+                </button>
+              </>
+            ) : (
+              <div className="device-selects">
+                <label>
+                  Microphone
+                  <select
+                    aria-label="In-call microphone device"
+                    value={media.audioId}
+                    onChange={(event) =>
+                      void media.selectDevice("audio", event.target.value)
+                    }
+                  >
+                    <option value="">System default</option>
+                    {media.devices
+                      .filter((device) => device.kind === "audioinput")
+                      .map((device, index) => (
+                        <option
+                          key={device.deviceId || index}
+                          value={device.deviceId}
+                        >
+                          {device.label || `Microphone ${index + 1}`}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label>
+                  Camera
+                  <select
+                    aria-label="In-call camera device"
+                    value={media.videoId}
+                    onChange={(event) =>
+                      void media.selectDevice("video", event.target.value)
+                    }
+                  >
+                    <option value="">System default</option>
+                    {media.devices
+                      .filter((device) => device.kind === "videoinput")
+                      .map((device, index) => (
+                        <option
+                          key={device.deviceId || index}
+                          value={device.deviceId}
+                        >
+                          {device.label || `Camera ${index + 1}`}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {leaveOpen && (
         <div
           className="modal-overlay"

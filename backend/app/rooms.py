@@ -10,11 +10,14 @@ from fastapi import WebSocket
 class Connection:
     socket: WebSocket
     participant: dict
+    last_chat: float = 0
+    last_reaction: float = 0
 
 
 class RoomRegistry:
     def __init__(self):
         self.rooms: dict[str, dict[str, Connection]] = {}
+        self.chat: dict[str, list[dict]] = {}
         # Serializes admission and control commands, avoiding two hosts/racing end events.
         self.lock = asyncio.Lock()
 

@@ -78,6 +78,9 @@ def public_user(user):
         "display_name": user.display_name,
         "email": user.email,
         "timezone": user.timezone,
+        "availability": user.availability,
+        "status_message": user.status_message,
+        "work_location": user.work_location,
     }
 
 

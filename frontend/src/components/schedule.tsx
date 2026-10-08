@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { SchedulePlaceholders } from "./placeholder-control";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeft, Plus, Info } from "lucide-react";
@@ -244,6 +245,7 @@ export default function Schedule() {
             browser without creating an account.
           </p>
         </div>
+        <SchedulePlaceholders />
         {error && (
           <p className="error" role="alert">
             {error}

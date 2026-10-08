@@ -1,0 +1,62 @@
+name: Deploy Railway and Vercel
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  railway:
+    name: Deploy backend to Railway
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Railway configuration
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo 'Missing RAILWAY_TOKEN secret'; exit 1; }
+          test -n "$RAILWAY_SERVICE_ID" || { echo 'Missing RAILWAY_SERVICE_ID variable'; exit 1; }
+      - run: npm install --global @railway/cli@latest
+      - name: Deploy backend directory and wait for deployment
+        run: railway up backend --path-as-root --service "$RAILWAY_SERVICE_ID"
+
+  vercel:
+    name: Deploy frontend to Vercel
+    needs: railway
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Vercel configuration
+        run: |
+          test -n "$VERCEL_TOKEN" || { echo 'Missing VERCEL_TOKEN secret'; exit 1; }
+          test -n "$VERCEL_ORG_ID" || { echo 'Missing VERCEL_ORG_ID secret'; exit 1; }
+          test -n "$VERCEL_PROJECT_ID" || { echo 'Missing VERCEL_PROJECT_ID secret'; exit 1; }
+      - run: npm install --global vercel@latest
+      # Run from the repository root. Vercel's project Root Directory is frontend.
+      - name: Pull production project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build production deployment
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Publish prebuilt deployment
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

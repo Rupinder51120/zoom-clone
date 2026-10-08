@@ -11,7 +11,14 @@ export type Meeting = {
   started_at: string | null;
   ended_at: string | null;
 };
-export type Profile = { display_name: string; email: string; timezone: string };
+export type Profile = {
+  display_name: string;
+  email: string;
+  timezone: string;
+  availability: string;
+  status_message: string;
+  work_location: string;
+};
 export type Peer = {
   id: string;
   display_name: string;
@@ -19,6 +26,7 @@ export type Peer = {
   audio: boolean;
   video: boolean;
   sharing: boolean;
+  hand_raised?: boolean;
 };
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/backend${path}`, {

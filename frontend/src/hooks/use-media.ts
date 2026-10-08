@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-export function useMedia(initialVideo: boolean) {
+export function useMedia(initialVideo: boolean, initialAudio = true) {
   const streamRef = useRef<MediaStream | null>(null);
   const generation = useRef(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -98,7 +98,7 @@ export function useMedia(initialVideo: boolean) {
     [refreshDevices],
   );
   useEffect(() => {
-    acquire(initialVideo, true);
+    acquire(initialVideo, initialAudio);
     const change = () => void refreshDevices();
     navigator.mediaDevices?.addEventListener("devicechange", change);
     return () => {
@@ -106,7 +106,7 @@ export function useMedia(initialVideo: boolean) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       navigator.mediaDevices?.removeEventListener("devicechange", change);
     };
-  }, [initialVideo, acquire, refreshDevices]);
+  }, [initialVideo, initialAudio, acquire, refreshDevices]);
   const toggleAudio = useCallback(async () => {
     const track = streamRef.current?.getAudioTracks()[0];
     if (track && track.readyState === "live") {
@@ -148,6 +148,6 @@ export function useMedia(initialVideo: boolean) {
     toggleVideo,
     mute,
     selectDevice,
-    retry: () => acquire(initialVideo, true, audioId, videoId),
+    retry: () => acquire(initialVideo, initialAudio, audioId, videoId),
   };
 }

@@ -54,3 +54,10 @@ blob-report/
 *.log
 *.swp
 *.swo
+
+# Alternate local browser verification output directories
+test-results*/
+
+# Deployment CLI project metadata
+.vercel/
+.railway/

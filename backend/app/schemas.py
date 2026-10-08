@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, Field, field_validator
@@ -49,15 +50,20 @@ class JoinRequest(BaseModel):
 
 
 class ProfileUpdate(BaseModel):
-    display_name: str = Field(min_length=1, max_length=100)
-    timezone: str = "Asia/Kolkata"
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    timezone: str | None = None
+    availability: (
+        Literal["Available", "Busy", "Do not disturb", "Away", "Out of office"] | None
+    ) = None
+    status_message: str | None = Field(default=None, max_length=200)
+    work_location: Literal["Off", "Office", "Home"] | None = None
 
     @field_validator("timezone")
     @classmethod
     def valid_timezone(cls, value):
-        return MeetingCreate.valid_timezone(value)
+        return MeetingCreate.valid_timezone(value) if value is not None else None
 
     @field_validator("display_name")
     @classmethod
     def clean_name(cls, value):
-        return JoinRequest.clean_name(value)
+        return JoinRequest.clean_name(value) if value is not None else None

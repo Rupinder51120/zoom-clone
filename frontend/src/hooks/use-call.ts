@@ -15,7 +15,17 @@ type PeerConnection = {
   pending: RTCIceCandidateInit[];
   queue: Promise<void>;
 };
+export type ChatEntry = {
+  id: string;
+  sender_id: string;
+  display_name: string;
+  text: string;
+  sent_at: string;
+};
 type Message = {
+  chat?: ChatEntry[];
+  entry?: ChatEntry;
+  emoji?: string;
   type: string;
   from?: string;
   data?: RTCSessionDescriptionInit | RTCIceCandidateInit;
@@ -45,6 +55,25 @@ export function useCall({
   screen: MediaStream | null;
   onMute: () => void;
 }) {
+  const [chat, setChat] = useState<ChatEntry[]>([]);
+  const [handRaised, setHandRaised] = useState(false);
+  const [reactions, setReactions] = useState<
+    Record<string, { emoji: string; expires: number }>
+  >({});
+  useEffect(() => {
+    const timer = setInterval(
+      () =>
+        setReactions((prev) =>
+          Object.fromEntries(
+            Object.entries(prev).filter(
+              ([, value]) => value.expires > Date.now(),
+            ),
+          ),
+        ),
+      1000,
+    );
+    return () => clearInterval(timer);
+  }, []);
   const [peers, setPeers] = useState<Peer[]>([]);
   const [remoteStreams, setRemoteStreams] = useState<
     Record<string, MediaStream>
@@ -156,6 +185,7 @@ export function useCall({
       if (disposed) return;
       switch (message.type) {
         case "welcome":
+          setChat(message.chat || []);
           setPeers(message.peers || []);
           setStatus("Connected");
           for (const p of message.peers || []) createPeer(p.id);
@@ -168,7 +198,23 @@ export function useCall({
               message.participant!,
             ]);
           break;
+        case "chat":
+          if (message.entry)
+            setChat((prev) => [...prev, message.entry!].slice(-100));
+          break;
+        case "reaction":
+          if (message.id && message.emoji)
+            setReactions((prev) => ({
+              ...prev,
+              [message.id!]: {
+                emoji: message.emoji!,
+                expires: Date.now() + 5000,
+              },
+            }));
+          break;
         case "participant_updated":
+          if (message.participant?.id === admission.current?.participant_id)
+            setHandRaised(!!message.participant?.hand_raised);
           if (message.participant)
             setPeers((prev) =>
               prev.map((p) =>
@@ -331,6 +377,9 @@ export function useCall({
     setFinished("You left the meeting.");
   }
   return {
+    chat,
+    handRaised,
+    reactions,
     peers,
     remoteStreams,
     self,

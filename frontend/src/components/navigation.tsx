@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -8,51 +8,58 @@ import {
   Video,
   Search,
   X,
-  Menu,
-  CheckCircle2,
+  Settings,
+  CalendarDays,
+  Plus,
   HelpCircle,
+  Sparkles,
+  MessageSquare,
+  Layers,
+  Ellipsis,
+  Bell,
 } from "lucide-react";
 import { api, Profile, startMeeting } from "@/lib/api";
+import Dashboard from "./dashboard";
+import { PlaceholderControl } from "./placeholder-control";
+import { ProfileMenu } from "./profile-menu";
+import { WorkflowDialog } from "./workflow-dialog";
 
 export function Logo() {
   return (
-    <Link href="/" className="zoom-logo" aria-label="Zoom home">
-      zoom
+    <Link href="/" className="zoom-logo" aria-label="ZOOM-CLONE home">
+      ZOOM-CLONE<span>Workplace</span>
     </Link>
   );
 }
 export function Header({ portal = false }: { portal?: boolean }) {
   const [account, setAccount] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [menu, setMenu] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     api<Profile>("/api/auth/me")
       .then(setAccount)
       .catch(() => setAccount(null));
+    api<Profile>("/api/profile")
+      .then(setProfile)
+      .catch(() => {});
   }, []);
-  async function signout() {
-    try {
-      await api("/api/auth/signout", { method: "POST" });
-      sessionStorage.clear();
-      window.location.assign("/");
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-  const [menu, setMenu] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
-    const click = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setMenu(null);
+    const click = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setMenu(null);
     };
-    const escape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenu(null);
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenu(null);
     };
     document.addEventListener("mousedown", click);
-    document.addEventListener("keydown", escape);
+    document.addEventListener("keydown", key);
     return () => {
       document.removeEventListener("mousedown", click);
-      document.removeEventListener("keydown", escape);
+      document.removeEventListener("keydown", key);
     };
   }, []);
   async function host(video: boolean, share = false) {
@@ -60,41 +67,64 @@ export function Header({ portal = false }: { portal?: boolean }) {
     setError("");
     try {
       await startMeeting(video, share);
-    } catch (e) {
-      setError((e as Error).message);
+    } catch (error) {
+      setError((error as Error).message);
       setBusy(false);
       setMenu(null);
     }
   }
+  async function signout() {
+    try {
+      await api("/api/auth/signout", { method: "POST" });
+      sessionStorage.clear();
+      window.location.assign("/");
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  }
   return (
-    <header ref={ref}>
-      {portal && (
-        <div className="utility-bar">
-          <a href="https://support.zoom.com" target="_blank" rel="noreferrer">
-            <Search size={18} /> Support
-          </a>
-        </div>
-      )}
+    <header ref={ref} className={portal ? "workspace-header" : "public-header"}>
       <div className="main-header">
         <Logo />
+        <form
+          className="workspace-search"
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            router.push(`/meetings?q=${encodeURIComponent(search.trim())}`);
+          }}
+        >
+          <Search size={18} />
+          <input
+            aria-label="Search meetings"
+            placeholder="Search meetings"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </form>
         <nav className="header-actions" aria-label="Meeting navigation">
-          <a
-            className="support-link"
-            href="https://support.zoom.com"
-            target="_blank"
-            rel="noreferrer"
+          <PlaceholderControl
+            label="Upgrade"
+            className="primary workspace-upgrade"
+          />
+          <PlaceholderControl label="Notifications" className="header-icon">
+            <Bell size={21} />
+          </PlaceholderControl>
+          <Link
+            className="header-icon"
+            href="/meeting/schedule"
+            aria-label="Schedule a meeting"
           >
-            Support
-          </a>
-          <Link href="/meeting/schedule">Schedule</Link>
+            <CalendarDays size={21} />
+          </Link>
           <Link href="/join">Join</Link>
           <div className="menu-wrap">
             <button
-              className={`nav-button ${menu === "host" ? "active" : ""}`}
+              className="nav-button"
               aria-expanded={menu === "host"}
               onClick={() => setMenu(menu === "host" ? null : "host")}
             >
-              Host <ChevronDown size={16} />
+              Host <ChevronDown size={14} />
             </button>
             {menu === "host" && (
               <div className="dropdown host-dropdown">
@@ -112,53 +142,30 @@ export function Header({ portal = false }: { portal?: boolean }) {
           </div>
           <div className="menu-wrap">
             <button
-              className={`nav-button ${menu === "web" ? "active" : ""}`}
-              aria-expanded={menu === "web"}
-              onClick={() => setMenu(menu === "web" ? null : "web")}
+              className="avatar"
+              data-availability={profile?.availability || "Available"}
+              aria-label="Your profile"
+              aria-expanded={menu === "profile"}
+              onClick={() => setMenu(menu === "profile" ? null : "profile")}
             >
-              Web App <ChevronDown size={16} />
+              {(account || profile)?.display_name
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase() || "ZC"}
             </button>
-            {menu === "web" && (
-              <div className="dropdown web-dropdown">
-                <Link href="/" onClick={() => setMenu(null)}>
-                  <Home size={21} /> Home
-                </Link>
-                <Link href="/meetings" onClick={() => setMenu(null)}>
-                  <Video size={21} /> Meetings
-                </Link>
-              </div>
+            {menu === "profile" && (
+              <ProfileMenu
+                key={profile?.email || "loading"}
+                profile={profile}
+                account={!!account}
+                onUpdate={setProfile}
+                onClose={() => setMenu(null)}
+                onSignout={signout}
+              />
             )}
           </div>
-          {account ? (
-            <div className="menu-wrap">
-              <button
-                className="avatar"
-                aria-label="Your profile"
-                aria-expanded={menu === "profile"}
-                onClick={() => setMenu(menu === "profile" ? null : "profile")}
-              >
-                {account.display_name
-                  .split(/\s+/)
-                  .slice(0, 2)
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()}
-              </button>
-              {menu === "profile" && (
-                <div className="dropdown profile-dropdown">
-                  <Link href="/profile" onClick={() => setMenu(null)}>
-                    Account Settings
-                  </Link>
-                  <button onClick={signout}>Sign Out</button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <Link href="/signin">Sign In</Link>
-              <Link href="/signup">Sign Up Free</Link>
-            </>
-          )}
         </nav>
       </div>
       {error && (
@@ -174,71 +181,102 @@ export function Header({ portal = false }: { portal?: boolean }) {
 }
 export function Sidebar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
   return (
-    <>
-      <button
-        className="mobile-sidebar-toggle"
-        onClick={() => setOpen(!open)}
-        aria-label="Toggle navigation"
-      >
-        <Menu size={20} /> Navigation
-      </button>
-      <aside className={`portal-sidebar ${open ? "is-open" : ""}`}>
-        <p className="sidebar-label">My Products</p>
-        <nav aria-label="Sidebar">
-          <Link
-            href="/"
-            onClick={() => setOpen(false)}
-            className={pathname === "/" ? "selected" : ""}
-          >
-            <Home size={15} /> Home
-          </Link>
-          <Link
-            href="/meetings"
-            onClick={() => setOpen(false)}
-            className={pathname.includes("meeting") ? "selected" : ""}
-          >
-            <Video size={15} /> Meetings
-          </Link>
-          <Link
-            href="/profile"
-            onClick={() => setOpen(false)}
-            className={pathname === "/profile" ? "selected" : ""}
-          >
-            <ChevronDown size={15} /> My Account
-          </Link>
-          <a href="https://support.zoom.com" target="_blank" rel="noreferrer">
-            <ChevronDown size={15} /> Support
-          </a>
-        </nav>
-      </aside>
-    </>
+    <aside className="portal-sidebar">
+      <nav aria-label="Sidebar">
+        <Link href="/" className={pathname === "/" ? "selected" : ""}>
+          <Home size={23} />
+          <span>Home</span>
+        </Link>
+        <PlaceholderControl label="ZoomMate" className="rail-placeholder">
+          <Sparkles size={23} />
+          <span>ZoomMate</span>
+        </PlaceholderControl>
+        <Link
+          href="/meetings"
+          className={pathname.includes("meeting") ? "selected" : ""}
+        >
+          <Video size={23} />
+          <span>Meetings</span>
+        </Link>
+        <PlaceholderControl
+          label="Chat"
+          className="rail-placeholder"
+          description="Workspace chat is a preview. Live chat inside meetings is available."
+        >
+          <MessageSquare size={23} />
+          <span>Chat</span>
+        </PlaceholderControl>
+        <PlaceholderControl label="Hub" className="rail-placeholder">
+          <Layers size={23} />
+          <span>Hub</span>
+        </PlaceholderControl>
+        <details className="rail-more">
+          <summary>
+            <Ellipsis size={23} />
+            <span>More</span>
+          </summary>
+          <div className="dropdown">
+            {[
+              "Phone",
+              "Canvas",
+              "Contacts",
+              "Whiteboards",
+              "Recordings",
+              "Summaries",
+              "Notes",
+              "Clips",
+              "Paper",
+              "Sheets",
+              "Slides",
+              "Tasks",
+              "Scheduler",
+            ].map((label) => (
+              <PlaceholderControl key={label} label={label} />
+            ))}
+          </div>
+        </details>
+        <Link href="/meeting/schedule">
+          <Plus size={23} />
+          <span>Schedule</span>
+        </Link>
+        <Link
+          href="/profile"
+          className={`rail-settings ${pathname === "/profile" ? "selected" : ""}`}
+        >
+          <Settings size={23} />
+          <span>Settings</span>
+        </Link>
+      </nav>
+    </aside>
   );
 }
 export function PortalShell({ children }: { children: React.ReactNode }) {
-  const [banner, setBanner] = useState(true);
+  const pathname = usePathname();
+  const scheduling = pathname === "/meeting/schedule";
+  const details = /^\/meetings\/[^/]+$/.test(pathname);
+  const modal = scheduling || details;
   return (
-    <>
+    <div className="workspace-shell">
       <Header portal />
-      {banner && (
-        <div className="promo-banner">
-          <CheckCircle2 size={21} />
-          <p>
-            <strong>Meet, connect, and get things done.</strong> Bring your team
-            together with video meetings, wherever you work.
-          </p>
-          <button onClick={() => setBanner(false)} aria-label="Dismiss banner">
-            <X size={17} />
-          </button>
-        </div>
-      )}
       <div className="portal-body">
         <Sidebar />
-        <main className="portal-content">{children}</main>
+        <main className="portal-content">
+          {modal ? (
+            <>
+              <Dashboard />
+              <WorkflowDialog
+                label={scheduling ? "Schedule Meeting" : "Meeting Details"}
+              >
+                {children}
+              </WorkflowDialog>
+            </>
+          ) : (
+            children
+          )}
+        </main>
       </div>
-      <HelpButton />
-    </>
+    </div>
   );
 }
 export function HelpButton() {
@@ -257,15 +295,8 @@ export function HelpButton() {
 export function Footer() {
   return (
     <footer className="public-footer">
-      <span>Zoom clone · Fullstack assignment demo</span>
-      <a
-        href="https://www.zoom.com/en/trust/privacy/"
-        target="_blank"
-        rel="noreferrer"
-      >
-        Privacy & Legal Policies
-      </a>
-      <span className="language">English</span>
+      <span>ZOOM-CLONE · Fullstack assignment demo</span>
+      <span>System appearance</span>
     </footer>
   );
 }

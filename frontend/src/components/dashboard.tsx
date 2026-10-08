@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { PlaceholderControl } from "./placeholder-control";
 import { useEffect, useState } from "react";
 import {
   Video,
@@ -8,11 +9,12 @@ import {
   ArrowRight,
   Copy,
   Check,
+  MonitorUp,
+  Sparkles,
 } from "lucide-react";
 import {
   api,
   Meeting,
-  Profile,
   startMeeting,
   openHostedMeeting,
   copyInvite,
@@ -130,12 +132,19 @@ export function MeetingList({
 export default function Dashboard({
   listOnly = false,
   initialTab = "upcoming",
+  searchQuery = "",
 }: {
   listOnly?: boolean;
   initialTab?: string;
+  searchQuery?: string;
 }) {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -146,33 +155,42 @@ export default function Dashboard({
   function load() {
     setLoading(true);
     setError("");
-    Promise.all([api<Meeting[]>("/api/meetings"), api<Profile>("/api/profile")])
-      .then(([m, p]) => {
-        setMeetings(m);
-        setProfile(p);
-      })
+    api<Meeting[]>("/api/meetings")
+      .then(setMeetings)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }
   useEffect(load, []);
-  async function create() {
+  async function create(share = false) {
     setBusy(true);
     try {
-      await startMeeting();
+      await startMeeting(!share, share);
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
     }
   }
   const upcoming = meetings
-    .filter((m) => m.status !== "ended")
+    .filter(
+      (m) =>
+        m.status !== "ended" &&
+        `${m.title} ${m.code}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+    )
     .sort(
       (a, b) =>
         new Date(a.scheduled_start || 0).getTime() -
         new Date(b.scheduled_start || 0).getTime(),
     );
   const recent = meetings
-    .filter((m) => m.status === "ended")
+    .filter(
+      (m) =>
+        m.status === "ended" &&
+        `${m.title} ${m.code}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+    )
     .sort(
       (a, b) =>
         new Date(b.ended_at || 0).getTime() -
@@ -180,104 +198,147 @@ export default function Dashboard({
     );
   return (
     <>
-      {!listOnly && <p className="dashboard-greeting">YOUR WORKSPACE</p>}
-      <div className="page-heading">
-        <div>
-          <h1>
-            {listOnly
-              ? "Meetings"
-              : `Welcome, ${profile?.display_name.split(" ")[0] || "Rupinder"}`}
-          </h1>
-          <p className="muted">
-            {listOnly
-              ? "Manage your upcoming and previous meetings."
-              : "A little connection goes a long way."}
-          </p>
-        </div>
-        {listOnly && (
-          <Link className="primary" href="/meeting/schedule">
-            <Plus size={16} /> Schedule a Meeting
-          </Link>
+      <div className={listOnly ? "workspace-meetings" : "workspace-home"}>
+        {!listOnly ? (
+          <div className="workspace-home-heading">
+            <h1>
+              {now?.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              }) || "Your workspace"}
+            </h1>
+            <p>
+              {now?.toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              }) || "Welcome to ZOOM-CLONE"}
+            </p>
+          </div>
+        ) : (
+          <div className="page-heading">
+            <div>
+              <h1>Meetings</h1>
+              <p className="muted">
+                Manage your upcoming and previous meetings.
+              </p>
+            </div>
+            <Link className="primary" href="/meeting/schedule">
+              <Plus size={16} /> Schedule a Meeting
+            </Link>
+          </div>
+        )}
+        {!listOnly && (
+          <div className="dashboard-actions">
+            <button
+              className="action-card"
+              onClick={() => create()}
+              disabled={busy}
+            >
+              <span className="action-icon orange">
+                <Video size={30} />
+              </span>
+              <strong>{busy ? "Starting…" : "New Meeting"}</strong>
+            </button>
+            <Link className="action-card" href="/join">
+              <span className="action-icon">
+                <Plus size={30} />
+              </span>
+              <strong>Join Meeting</strong>
+            </Link>
+            <Link className="action-card" href="/meeting/schedule">
+              <span className="action-icon">
+                <CalendarDays size={30} />
+              </span>
+              <strong>Schedule</strong>
+            </Link>
+            <button
+              className="action-card"
+              onClick={() => create(true)}
+              disabled={busy}
+            >
+              <span className="action-icon">
+                <MonitorUp size={30} />
+              </span>
+              <strong>Share Screen</strong>
+            </button>
+            <PlaceholderControl label="My Notes" className="action-card">
+              <span className="action-icon">
+                <Sparkles size={30} />
+              </span>
+              <strong>My Notes</strong>
+            </PlaceholderControl>
+          </div>
+        )}
+        {!listOnly && (
+          <div className="workspace-reference-notice">
+            <span>You haven’t connected your calendar yet.</span>
+            <PlaceholderControl
+              label="Connect now"
+              className="text-button"
+              description="Calendar provider connection is a placeholder. You can export your meetings from the Meetings view."
+            />
+          </div>
+        )}
+        {error && (
+          <div role="alert">
+            <p className="error">{error}</p>
+            {loading === false && meetings.length === 0 && (
+              <button className="secondary" onClick={load}>
+                Try again
+              </button>
+            )}
+          </div>
+        )}
+        {loading ? (
+          <p className="loading">Loading your meetings…</p>
+        ) : listOnly ? (
+          <>
+            <div className="tabs">
+              <button
+                className={tab === "upcoming" ? "active" : ""}
+                onClick={() => setTab("upcoming")}
+              >
+                Upcoming
+              </button>
+              <button
+                className={tab === "recent" ? "active" : ""}
+                onClick={() => setTab("recent")}
+              >
+                Previous
+              </button>
+            </div>
+            <MeetingList
+              meetings={tab === "upcoming" ? upcoming : recent}
+              onError={setError}
+            />
+          </>
+        ) : (
+          <>
+            <section className="meeting-section">
+              <div className="section-heading">
+                <h2>Upcoming Meetings</h2>
+                <Link href="/meetings">
+                  View all{" "}
+                  <ArrowRight size={13} style={{ display: "inline" }} />
+                </Link>
+              </div>
+              <MeetingList meetings={upcoming.slice(0, 3)} onError={setError} />
+              <PlaceholderControl
+                label="Open recordings"
+                className="recordings-placeholder"
+              />
+            </section>
+            <section className="meeting-section">
+              <div className="section-heading">
+                <h2>Recent Meetings</h2>
+                <Link href="/meetings?tab=recent">View all</Link>
+              </div>
+              <MeetingList meetings={recent.slice(0, 2)} onError={setError} />
+            </section>
+          </>
         )}
       </div>
-      {!listOnly && (
-        <div className="dashboard-actions">
-          <button className="action-card" onClick={create} disabled={busy}>
-            <span className="action-icon orange">
-              <Video size={28} />
-            </span>
-            <strong>{busy ? "Starting…" : "New Meeting"}</strong>
-            <span>Start an instant video meeting</span>
-          </button>
-          <Link className="action-card" href="/join">
-            <span className="action-icon">
-              <Plus size={29} />
-            </span>
-            <strong>Join Meeting</strong>
-            <span>Connect with a meeting ID or link</span>
-          </Link>
-          <Link className="action-card" href="/meeting/schedule">
-            <span className="action-icon">
-              <CalendarDays size={27} />
-            </span>
-            <strong>Schedule</strong>
-            <span>Find a time to bring everyone together</span>
-          </Link>
-        </div>
-      )}
-      {error && (
-        <div role="alert">
-          <p className="error">{error}</p>
-          {loading === false && meetings.length === 0 && (
-            <button className="secondary" onClick={load}>
-              Try again
-            </button>
-          )}
-        </div>
-      )}
-      {loading ? (
-        <p className="loading">Loading your meetings…</p>
-      ) : listOnly ? (
-        <>
-          <div className="tabs">
-            <button
-              className={tab === "upcoming" ? "active" : ""}
-              onClick={() => setTab("upcoming")}
-            >
-              Upcoming
-            </button>
-            <button
-              className={tab === "recent" ? "active" : ""}
-              onClick={() => setTab("recent")}
-            >
-              Previous
-            </button>
-          </div>
-          <MeetingList
-            meetings={tab === "upcoming" ? upcoming : recent}
-            onError={setError}
-          />
-        </>
-      ) : (
-        <>
-          <section className="meeting-section">
-            <div className="section-heading">
-              <h2>Upcoming Meetings</h2>
-              <Link href="/meetings">
-                View all <ArrowRight size={13} style={{ display: "inline" }} />
-              </Link>
-            </div>
-            <MeetingList meetings={upcoming.slice(0, 3)} onError={setError} />
-          </section>
-          <section className="meeting-section">
-            <div className="section-heading">
-              <h2>Recent Meetings</h2>
-              <Link href="/meetings?tab=recent">View all</Link>
-            </div>
-            <MeetingList meetings={recent.slice(0, 2)} onError={setError} />
-          </section>
-        </>
-      )}
     </>
   );
 }

@@ -1,14 +1,14 @@
-import Dashboard from "@/components/dashboard";
+import MeetingsAgenda from "@/components/meetings-agenda";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const query = await searchParams;
   return (
-    <Dashboard
-      listOnly
-      initialTab={query.tab === "recent" ? "recent" : "upcoming"}
+    <MeetingsAgenda
+      searchQuery={query.q || ""}
+      recent={query.tab === "recent"}
     />
   );
 }

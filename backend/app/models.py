@@ -17,6 +17,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True)
     password_hash: Mapped[str | None] = mapped_column(Text)
     timezone: Mapped[str] = mapped_column(String(80), default="Asia/Kolkata")
+    availability: Mapped[str] = mapped_column(String(20), default="Available")
+    status_message: Mapped[str] = mapped_column(String(200), default="")
+    work_location: Mapped[str] = mapped_column(String(20), default="Off")
     created_at: Mapped[str] = mapped_column(default=utc_now)
     meetings: Mapped[list["Meeting"]] = relationship(back_populates="host")
 

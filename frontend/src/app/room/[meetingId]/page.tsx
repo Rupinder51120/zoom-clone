@@ -12,6 +12,7 @@ export default async function Page({
     <Room
       code={meetingId}
       initialVideo={query.video !== "0"}
+      initialAudio={query.audio !== "0"}
       hostMode={query.host === "1"}
       screenOnly={query.share === "1"}
     />

@@ -41,7 +41,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
       <header className="auth-header">
         <Logo />
         <nav>
-          {signup ? "Already have an account?" : "New to Zoom?"}{" "}
+          {signup ? "Already have an account?" : "New to ZOOM-CLONE?"}{" "}
           <Link href={signup ? "/signin" : "/signup"}>
             {signup ? "Sign In" : "Sign Up Free"}
           </Link>
@@ -135,7 +135,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
             <Link href="/" className="text-button">
               Continue without an account
             </Link>
-            <p className="form-hint">Zoom clone · Fullstack assignment demo</p>
+            <p className="form-hint">ZOOM-CLONE · Fullstack assignment demo</p>
           </form>
         </section>
       </main>

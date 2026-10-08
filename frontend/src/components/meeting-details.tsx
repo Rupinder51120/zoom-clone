@@ -9,7 +9,13 @@ import {
   copyInvite,
   openHostedMeeting,
 } from "@/lib/api";
-export default function MeetingDetails({ code }: { code: string }) {
+export default function MeetingDetails({
+  code,
+  scheduled = false,
+}: {
+  code: string;
+  scheduled?: boolean;
+}) {
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -46,7 +52,9 @@ export default function MeetingDetails({ code }: { code: string }) {
         <ChevronLeft size={16} />
         Back to Meetings
       </Link>
-      <h1>Meeting Details</h1>
+      <h1>
+        {scheduled ? "Your meeting has been scheduled" : "Meeting Details"}
+      </h1>
       {error && (
         <p className="error" role="alert">
           {error}

@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Header, Footer, HelpButton } from "./navigation";
+import { PortalShell } from "./navigation";
+import Dashboard from "./dashboard";
+import Link from "next/link";
+import { WorkflowDialog } from "./workflow-dialog";
 import { api, Meeting } from "@/lib/api";
 export function parseMeeting(value: string): string {
   const trimmed = value.trim();
@@ -23,10 +26,14 @@ function JoinForm() {
   const params = useSearchParams();
   const router = useRouter();
   const [value, setValue] = useState("");
+  const [name, setName] = useState("");
+  const [audioOff, setAudioOff] = useState(false);
+  const [videoOff, setVideoOff] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     setValue(params.get("meeting") || "");
+    setName(localStorage.getItem("guest-name") || "");
   }, [params]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +49,10 @@ function JoinForm() {
       const meeting = await api<Meeting>(`/api/meetings/${code}`);
       if (meeting.status === "ended")
         throw new Error("This meeting has ended.");
-      router.push(`/room/${code}`);
+      if (name.trim()) localStorage.setItem("guest-name", name.trim());
+      router.push(
+        `/room/${code}?video=${videoOff ? "0" : "1"}&audio=${audioOff ? "0" : "1"}`,
+      );
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -62,35 +72,49 @@ function JoinForm() {
           autoComplete="off"
           aria-describedby={error ? "join-error" : undefined}
         />
+        <label htmlFor="join-name">Your Name</label>
+        <input
+          id="join-name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          maxLength={100}
+          placeholder="Enter your display name"
+        />
+        <label className="join-option">
+          <input
+            type="checkbox"
+            checked={audioOff}
+            onChange={(event) => setAudioOff(event.target.checked)}
+          />{" "}
+          Don’t connect to audio
+        </label>
+        <label className="join-option">
+          <input
+            type="checkbox"
+            checked={videoOff}
+            onChange={(event) => setVideoOff(event.target.checked)}
+          />{" "}
+          Turn off my video
+        </label>
         {error && (
           <p id="join-error" className="error" role="alert">
             {error}
           </p>
         )}
-        <button
-          className="primary join-submit"
-          disabled={!value.trim() || busy}
-        >
-          {busy ? "Joining…" : "Join"}
-        </button>
+        <div className="join-buttons">
+          <Link className="secondary" href="/">
+            Cancel
+          </Link>
+          <button
+            className="primary join-submit"
+            disabled={!value.trim() || busy}
+          >
+            {busy ? "Joining…" : "Join"}
+          </button>
+        </div>
         <p className="join-terms">
-          By clicking “Join”, you agree to our{" "}
-          <a
-            href="https://www.zoom.com/en/trust/terms/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a
-            href="https://www.zoom.com/en/trust/privacy/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Privacy Statement
-          </a>
-          .
+          Join from your browser. You can change your audio and video settings
+          in the preview before entering.
         </p>
       </form>
       <p className="room-system-note">
@@ -101,13 +125,13 @@ function JoinForm() {
 }
 export default function Join() {
   return (
-    <div className="public-page">
-      <Header />
-      <Suspense fallback={<main className="join-main">Loading…</main>}>
-        <JoinForm />
-      </Suspense>
-      <Footer />
-      <HelpButton />
-    </div>
+    <PortalShell>
+      <Dashboard />
+      <WorkflowDialog label="Join Meeting">
+        <Suspense fallback={<main className="join-main">Loading…</main>}>
+          <JoinForm />
+        </Suspense>
+      </WorkflowDialog>
+    </PortalShell>
   );
 }

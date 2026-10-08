@@ -1,6 +1,6 @@
-# Zoom web meeting clone
+# ZOOM-CLONE
 
-An original fullstack assignment implementation using Next.js App Router, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy, Alembic and SQLite. The portal and Join screen follow the supplied Zoom screenshots: white navigation, navy utility bar, pale sidebar, blue controls, generous whitespace, and dropdown menus.
+An original fullstack assignment implementation using Next.js App Router, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy, Alembic and SQLite. The interface follows the supplied Zoom Workplace references: compact chrome, a narrow navigation rail, centered clock and meeting actions, rounded workspace surfaces, modal Join/Schedule flows and a compact call toolbar.
 
 ## Run locally
 
@@ -39,6 +39,7 @@ Seeds are inserted once on a fresh database: a demo user, three upcoming meeting
 - Scheduling: topic, optional description, date/time, IANA timezone, duration, host video preference.
 - Real browser WebRTC audio/video through a peer mesh; FastAPI WebSockets carry signaling and participant events.
 - Microphone/camera controls, participant list, browser screen sharing, invite, leave.
+- Meeting-wide live text chat, six emoji reactions and raise/lower hand indicators.
 - Server-authorized host commands: mute all, remove participant, end for everyone.
 - Signup/signin/signout, account settings and password changes; account-owned meetings and responsive portal/meeting room.
 - SQLite participant join/leave/removal history and meeting status/start/end timestamps.
@@ -90,7 +91,7 @@ Email/password authentication is implemented. Email verification, forgotten-pass
 
 Foreign keys are enabled on every SQLite connection. Meeting participant records belong to their meeting; connected sockets are kept separately in the single-worker registry. Alembic migration 001 creates the meeting schema; 002 adds optional password credentials and account sessions. Seeds are inserted on fresh startup and never overwrite existing meetings or account credentials.
 
-The application supports optional Login/Signup, default-user access without login, and host-only mute-all/removal. Portal, forms and call controls adapt to mobile/tablet/desktop sizes. UI styling follows the supplied Zoom references, with unsupported product controls removed as requested. This is an original assignment implementation using the listed framework dependencies, not Zoom's source code.
+The application supports optional Login/Signup, default-user access without login, and host-only mute-all/removal. Portal, forms and call controls adapt to mobile/tablet/desktop sizes. UI styling follows the supplied Zoom references, with unsupported product controls shown as explicit previews. This is an original assignment implementation using the listed framework dependencies, not Zoom's source code.
 
 Local acceptance tests cover two synthetic browser participants receiving remote video and audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. This does not certify real-device/cross-network connectivity or exact pixel equality with Zoom. Test suites and reports stay local according to the requested Git ignore policy.
 
@@ -151,7 +152,7 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/zoom-playwright npm run test:e2e
 ## Assumptions and limitations
 
 - Small demo meetings; no Zoom-scale participant or reliability claim. Peer mesh bandwidth grows with participant count.
-- No OAuth, email verification/recovery, MFA, recording, phone dialing, recurring meetings, waiting rooms, calendar email delivery, chat or whiteboard. Unrelated reference navigation and nonfunctional controls are omitted.
+- No OAuth, email verification/recovery, MFA, recording, phone dialing, recurring meetings, waiting rooms, calendar email delivery or whiteboard. Reference-only controls open a Preview only notice; unsupported scheduling options are disabled and never submitted.
 - All calls happen in the browser. Camera/microphone access needs HTTPS (localhost is allowed); browser screen sharing requires a user action and may not be supported on mobile.
 - Host mute requests are honored by this client; no peer mesh implementation can prevent a modified malicious client from transmitting audio. Hosts cannot remotely enable another person's microphone.
 - Removing a participant invalidates that participant session. With anonymous names and a shared invitation, a person can join again with a new guest session; persistent identity-based bans require authentication.
@@ -160,3 +161,23 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/zoom-playwright npm run test:e2e
 - Socket disconnection closes the call and offers rejoin. There is no automatic reconnection that silently reuses a closed participant session.
 - Brand visuals are used for an assignment demo. Footer identifies this implementation as a clone.
 - Deployment configuration is included; provisioning accounts, a public repository and a hosted URL is a separate step requiring your accounts.
+
+## Meeting collaboration
+
+Chat, emoji reactions and raised hands travel over the admitted participant WebSocket, separately from WebRTC media. The server supplies sender IDs/names; clients cannot select another sender. Chat messages are plain text (1–2000 characters), rendered with React text escaping. A room retains its latest 100 messages for late joiners while anyone remains connected; history is discarded when the room empties or the backend restarts. There are no private messages or durable chat archives.
+
+Each participant can raise/lower their own hand; the state appears on their video tile and in Participants. Six supported reactions appear on the sender's tile for five seconds. Chat has a half-second send interval and reactions a one-second interval per connected participant. These limits bound routine traffic; anonymous guests can obtain new sessions.
+
+## Appearance and workspace navigation
+
+The application is named ZOOM-CLONE. CSS `prefers-color-scheme` follows the operating system's light/dark setting, including changes made while the page is open. Shared surface/text/border variables style workspace pages, forms, menus, authentication, previews and live calls without a saved theme override or hydration flash. `workspace.css` contains the reference layout and theme styling.
+
+Join and Schedule use native modal dialogs with focus containment and Escape/close navigation back home. Join options select the initial audio/video state in the media preview; users can enable devices afterward. Search filters the user's upcoming/previous meetings by title or ID. Scheduling confirmation and meeting details open over the home workspace. In-call More offers meeting information, device settings and copying invitations; Host tools exposes the existing authorized controls. Unsupported screenshot products, paid upgrades, recording, AI tools, calendar connections and breakout rooms are not presented as working buttons.
+
+The Meetings workspace includes a mini month calendar, day navigation, Upcoming/Previous filters, refresh, and an iCalendar (`.ics`) download. It defaults to Upcoming so future meetings remain easy to find; choosing a date opens that day's agenda. Calendar dates follow the browser's time zone; meeting cards retain their saved meeting time zone. Export is a downloaded calendar file, not a connected Google/Outlook account.
+
+The profile menu saves availability, a status message, and work location in SQLite (migration `003`). Availability is manually selected, not inferred presence. Anonymous visitors share demo-user preferences; optional signed-in accounts save their own preferences. Subscription upgrades and native-app update/download controls are visual placeholders only.
+
+## GitHub Actions: Railway + Vercel
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Railway volume, Vercel project, environment variables and GitHub credentials setup. CI checks frontend formatting/types/build and backend lint/migrations/API smoke behavior on every push or pull request. After setup, successful `main` pushes deploy the Railway backend followed by the Vercel frontend when `ENABLE_PRODUCTION_DEPLOYMENTS=true`. Manual deployment is available through **Actions → CI and deployment → Run workflow**. Full local suites remain ignored; CI's tracked smoke verification does not replace real-device testing.
