@@ -1441,6 +1441,10 @@ textarea {
   }
 }
 @media (max-width: 600px) {
+  /* Support remains in mobile navigation; avoid covering meeting action buttons. */
+  .portal-body ~ .help-bubble {
+    display: none;
+  }
   .header-actions {
     gap: 14px;
   }

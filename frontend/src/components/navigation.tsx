@@ -157,9 +157,29 @@ export function Header({ portal = false }: { portal?: boolean }) {
               </div>
             )}
           </div>
-          <Link href="/profile" className="avatar" aria-label="Your profile">
-            RK
-          </Link>
+          <div className="menu-wrap">
+            <button
+              className="avatar"
+              aria-label="Your profile"
+              aria-expanded={menu === "profile"}
+              onClick={() => setMenu(menu === "profile" ? null : "profile")}
+            >
+              RK
+            </button>
+            {menu === "profile" && (
+              <div className="dropdown profile-dropdown">
+                <Link href="/profile" onClick={() => setMenu(null)}>
+                  My Profile
+                </Link>
+                <button
+                  disabled
+                  title="Settings placeholder for this assignment"
+                >
+                  Settings
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
       {error && (
