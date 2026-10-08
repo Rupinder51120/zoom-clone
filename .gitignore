@@ -1,0 +1,42 @@
+# Dependencies and generated builds
+node_modules/
+.next/
+.venv/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+
+# Local database and environment secrets (keep example configuration)
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+
+# Local planning, assignment references, progress notes, and screenshots
+/docs/
+/domain.txt
+AGENTS.md
+CLAUDE.md
+
+# Local test suites, configuration, reports, and caches
+/backend/tests/
+/frontend/tests/
+/frontend/playwright.config.ts
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Editor and operating-system artifacts
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.swp
+*.swo

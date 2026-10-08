@@ -1,0 +1,308 @@
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import {
+  ChevronDown,
+  Home,
+  Video,
+  MessageSquare,
+  Phone,
+  Layers,
+  Contact,
+  PanelTop,
+  FileText,
+  ExternalLink,
+  Search,
+  X,
+  Menu,
+  CheckCircle2,
+  HelpCircle,
+} from "lucide-react";
+import { startMeeting } from "@/lib/api";
+
+export function Logo() {
+  return (
+    <Link href="/" className="zoom-logo" aria-label="Zoom home">
+      zoom
+    </Link>
+  );
+}
+export function Header({ portal = false }: { portal?: boolean }) {
+  const [menu, setMenu] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const click = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setMenu(null);
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenu(null);
+    };
+    document.addEventListener("mousedown", click);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", click);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
+  async function host(video: boolean, share = false) {
+    setBusy(true);
+    setError("");
+    try {
+      await startMeeting(video, share);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(false);
+      setMenu(null);
+    }
+  }
+  return (
+    <header ref={ref}>
+      {portal && (
+        <div className="utility-bar">
+          <a href="https://support.zoom.com" target="_blank" rel="noreferrer">
+            <Search size={18} /> Support
+          </a>
+          <span>Contact Sales</span>
+          <span>Request a Demo</span>
+        </div>
+      )}
+      <div className="main-header">
+        <Logo />
+        {portal && (
+          <nav className="marketing-nav" aria-label="Product navigation">
+            <span>Products</span>
+            <span>Solutions</span>
+            <span>Resources</span>
+            <span>Plans & Pricing</span>
+          </nav>
+        )}
+        <nav className="header-actions" aria-label="Meeting navigation">
+          <a
+            className="support-link"
+            href="https://support.zoom.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Support
+          </a>
+          <Link href="/meeting/schedule">Schedule</Link>
+          <Link href="/join">Join</Link>
+          <div className="menu-wrap">
+            <button
+              className={`nav-button ${menu === "host" ? "active" : ""}`}
+              aria-expanded={menu === "host"}
+              onClick={() => setMenu(menu === "host" ? null : "host")}
+            >
+              Host <ChevronDown size={16} />
+            </button>
+            {menu === "host" && (
+              <div className="dropdown host-dropdown">
+                <button disabled={busy} onClick={() => host(false)}>
+                  With Video Off
+                </button>
+                <button disabled={busy} onClick={() => host(true)}>
+                  With Video On
+                </button>
+                <button disabled={busy} onClick={() => host(false, true)}>
+                  Screen Share Only
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="menu-wrap">
+            <button
+              className={`nav-button ${menu === "web" ? "active" : ""}`}
+              aria-expanded={menu === "web"}
+              onClick={() => setMenu(menu === "web" ? null : "web")}
+            >
+              Web App <ChevronDown size={16} />
+            </button>
+            {menu === "web" && (
+              <div className="dropdown web-dropdown">
+                <Link href="/" onClick={() => setMenu(null)}>
+                  <Home size={21} /> Home
+                </Link>
+                {[
+                  ["Chat", MessageSquare],
+                  ["Phone", Phone],
+                  ["Meetings", Video],
+                  ["Hub", Layers],
+                  ["Canvas", FileText],
+                  ["Contacts", Contact],
+                  ["Whiteboards", PanelTop],
+                ].map(([name, Icon]) =>
+                  name === "Meetings" ? (
+                    <Link
+                      key="Meetings"
+                      href="/meetings"
+                      onClick={() => setMenu(null)}
+                    >
+                      <Video size={21} /> Meetings
+                    </Link>
+                  ) : (
+                    <button
+                      key={String(name)}
+                      disabled
+                      title="Outside this assignment's scope"
+                    >
+                      {typeof Icon !== "string" && <Icon size={21} />}{" "}
+                      {String(name)}
+                      <span className="menu-note">Coming soon</span>
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+          <Link href="/profile" className="avatar" aria-label="Your profile">
+            RK
+          </Link>
+        </nav>
+      </div>
+      {error && (
+        <div role="alert" className="header-error">
+          {error}
+          <button onClick={() => setError("")} aria-label="Dismiss error">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+    </header>
+  );
+}
+const products = [
+  "AI",
+  "Meetings",
+  "Recordings",
+  "Summaries",
+  "Hub",
+  "Whiteboards",
+  "Notes",
+  "Clips",
+  "Canvas",
+  "Paper",
+  "Sheets",
+  "Slides",
+  "Tasks",
+  "Scheduler",
+  "Discover More Products",
+];
+export function Sidebar() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        className="mobile-sidebar-toggle"
+        onClick={() => setOpen(!open)}
+        aria-label="Toggle navigation"
+      >
+        <Menu size={20} /> Navigation
+      </button>
+      <aside className={`portal-sidebar ${open ? "is-open" : ""}`}>
+        <p className="sidebar-label">My Products</p>
+        <nav aria-label="Sidebar">
+          {products.map((name) =>
+            name === "Meetings" ? (
+              <Link
+                key={name}
+                href="/meetings"
+                onClick={() => setOpen(false)}
+                className={pathname.includes("meeting") ? "selected" : ""}
+              >
+                Meetings
+              </Link>
+            ) : (
+              <div className="sidebar-placeholder" key={name}>
+                {name}
+                {["AI", "Hub"].includes(name) && (
+                  <span className="new-badge">New</span>
+                )}
+                {[
+                  "AI",
+                  "Hub",
+                  "Whiteboards",
+                  "Clips",
+                  "Canvas",
+                  "Paper",
+                  "Sheets",
+                  "Slides",
+                  "Tasks",
+                  "Scheduler",
+                ].includes(name) && <ExternalLink size={13} />}
+              </div>
+            ),
+          )}
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className={pathname === "/profile" ? "selected" : ""}
+          >
+            <ChevronDown size={15} /> My Account
+          </Link>
+          <a href="https://support.zoom.com" target="_blank" rel="noreferrer">
+            <ChevronDown size={15} /> Support
+          </a>
+        </nav>
+      </aside>
+    </>
+  );
+}
+export function PortalShell({ children }: { children: React.ReactNode }) {
+  const [banner, setBanner] = useState(true);
+  return (
+    <>
+      <Header portal />
+      {banner && (
+        <div className="promo-banner">
+          <CheckCircle2 size={21} />
+          <p>
+            <strong>Meet, connect, and get things done.</strong> Bring your team
+            together with video meetings, wherever you work.
+          </p>
+          <button onClick={() => setBanner(false)} aria-label="Dismiss banner">
+            <X size={17} />
+          </button>
+        </div>
+      )}
+      <div className="portal-body">
+        <Sidebar />
+        <main className="portal-content">{children}</main>
+      </div>
+      <HelpButton />
+    </>
+  );
+}
+export function HelpButton() {
+  return (
+    <a
+      className="help-bubble"
+      href="https://support.zoom.com"
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Open Zoom support"
+    >
+      <HelpCircle size={27} />
+    </a>
+  );
+}
+export function Footer() {
+  return (
+    <footer className="public-footer">
+      <span>Zoom clone · Fullstack assignment demo</span>
+      <a
+        href="https://www.zoom.com/en/trust/privacy/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Privacy & Legal Policies
+      </a>
+      <span className="language">
+        English <ChevronDown size={14} />
+      </span>
+    </footer>
+  );
+}
