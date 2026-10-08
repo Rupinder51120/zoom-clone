@@ -24,16 +24,12 @@ build/
 AGENTS.md
 CLAUDE.md
 
-# Local test suites, configuration, reports, and caches
-tests/
-__tests__/
-test_*.py
-*_test.py
-*.test.*
-*.spec.*
-playwright*.config.*
-vitest.config.*
-jest.config.*
+# Local test suites and browser configurations
+/backend/tests/
+/frontend/tests/
+/frontend/playwright*.config.ts
+
+# Generated test reports and caches
 .pytest_cache/
 .ruff_cache/
 .coverage

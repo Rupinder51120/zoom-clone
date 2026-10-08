@@ -1,24 +1,128 @@
-# ZOOM-CLONE
+# ZOOM-CLONE: a Zoom meeting platform clone
 
-An original fullstack assignment implementation using Next.js App Router, TypeScript, Tailwind CSS, FastAPI, SQLAlchemy, Alembic and SQLite. The interface follows the supplied Zoom Workplace references: compact chrome, a narrow navigation rail, centered clock and meeting actions, rounded workspace surfaces, modal Join/Schedule flows and a compact call toolbar.
+A full-stack video conferencing application: create instant meetings, share invitations, join from a browser,
+schedule meetings, and make real audio/video calls. The interface follows the supplied Zoom Workplace
+references, with a navigation rail, centered meeting actions, modal Join/Schedule flows and a compact call toolbar.
 
-## Run locally
+- **Repository:** [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone)
+- **Live demo:** Deployment pending; no verified public application URL yet.
+- **Stack:** Next.js 16 (TypeScript) · FastAPI (Python) · SQLite · SQLAlchemy 2 · Alembic · WebRTC · WebSockets
+- **Verification:** Latest local acceptance run on 9 October 2026: **60 backend tests and 9 production-browser tests passed**. Synthetic media devices were used; physical-device and cross-network testing remain pending.
+- **Feature checklist:** [corefeatures.md](corefeatures.md)
 
-Requirements: Node.js 20.9+ and Python 3.11+.
+---
 
-Backend (first terminal):
+## Contents
+
+1. [Features](#features)
+2. [Tech stack](#tech-stack)
+3. [Running it locally](#running-it-locally)
+4. [Architecture](#architecture)
+5. [Database schema](#database-schema)
+6. [API overview](#api-overview)
+7. [Testing](#testing)
+8. [Deployment](#deployment)
+9. [Design decisions](#design-decisions)
+10. [Assumptions](#assumptions)
+11. [Known limitations and future work](#known-limitations-and-future-work)
+
+---
+
+## Features
+
+### Core
+
+| Area | What you can do |
+|---|---|
+| **Dashboard** | Create, join and schedule meetings; view upcoming and recent meetings; search by title or ID; access profile/settings |
+| **Instant meetings** | Generate a unique 11-digit meeting ID and invite link; open the host's meeting room |
+| **Joining** | Enter a meeting ID or invitation URL, choose a display name, validate meeting existence, preview devices and choose initial audio/video settings |
+| **Scheduling** | Save a title, optional description, date/time, IANA timezone, duration and host video preference; copy the generated invitation |
+| **Meeting details** | View saved scheduling information, copy an invitation, start as the owner or join as a guest |
+| **Live calls** | Browser WebRTC audio/video, microphone/camera controls, participants, screen sharing, invitations, leave and end-for-everyone |
+| **Persistence** | SQLite meeting metadata and participant join/leave/removal history; scheduled meetings survive refresh and backend restart |
+
+### Bonus and additional functionality
+
+- **Optional authentication:** signup, signin, signout and password changes; personal accounts own their meetings. All mandatory workflows also work without login.
+- **Host controls:** backend-authorized mute-all, participant removal and end-for-everyone.
+- **Responsive appearance:** desktop, tablet and mobile layouts; light/dark theme follows system settings.
+- **Meeting collaboration:** live text chat, six emoji reactions and raise/lower hand indicators.
+- **Meeting navigation:** mini calendar, day navigation, Upcoming/Previous filters, refresh and iCalendar (`.ics`) export.
+- **Profile preferences:** save manually selected availability, a status message and work location.
+
+Unsupported screenshot products open a **Preview only** notice or appear as disabled options. Recording,
+AI tools, paid upgrades, connected calendars and breakout rooms are not implemented services.
+
+### Seed data
+
+On a fresh database, startup creates the demo user **Rupinder Kaur** (`demo@example.com`) and five meetings:
+
+| Meeting | Initial status | Duration |
+|---|---|---|
+| Product design review | Upcoming, one day after initial startup | 40 minutes |
+| Engineering team sync | Upcoming, two days after initial startup | 30 minutes |
+| Weekly project catch-up | Upcoming, three days after initial startup | 60 minutes |
+| Sprint planning | Completed sample meeting | 45 minutes |
+| Design walkthrough | Completed sample meeting | 30 minutes |
+
+Seed dates are relative to the first startup. Restarting preserves existing records rather than resetting their dates.
+There is no built-in demo password. Optional `DEMO_PASSWORD` provisions a missing demo password without overwriting an existing one.
+
+---
+
+## Tech stack
+
+| Layer | Choice | Purpose |
+|---|---|---|
+| Frontend | **Next.js 16**, App Router, TypeScript | Pages, shared layouts and server API proxy |
+| Styling | **Tailwind CSS 4** and CSS variables | Reference layout, responsive styles and system light/dark themes |
+| UI | Native HTML dialogs, React components, Lucide icons | Modal focus containment and reusable controls |
+| Backend | **FastAPI**, Pydantic | HTTP endpoints, validation, WebSocket admission and room events |
+| Database | **SQLite**, **SQLAlchemy 2**, **Alembic** | Persistent records, relationships and versioned migrations |
+| Media | Browser **WebRTC** | Peer-to-peer audio/video and screen tracks; configurable STUN/TURN |
+| Room events | **WebSockets** | Signaling, participants, chat, reactions, hands and host commands |
+| Verification | pytest, Playwright, Ruff, TypeScript, Prettier | API/browser regression tests and code checks |
+| Deployment | GitHub Actions, **Railway** backend, **Vercel** frontend | CI and configured release workflow |
+
+---
+
+## Running it locally
+
+Prerequisites: **Python 3.11+**, **Node.js 20.9+** and Git. CI uses Python 3.11 and Node.js 22.
+Run backend commands from `backend/` so the default SQLite path resolves consistently.
+
+### 1. Backend — port 8000
+
+macOS / Linux:
 
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.lock.txt
 cp .env.example .env
-alembic upgrade head
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+python -m alembic upgrade head
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 ```
 
-Frontend (second terminal):
+Windows / PowerShell:
+
+```powershell
+cd backend
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.lock.txt
+Copy-Item .env.example .env
+python -m alembic upgrade head
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+```
+
+Apply migrations before startup after pulling schema changes. Seeding runs automatically during API startup.
+
+### 2. Frontend — port 3000
+
+In a second terminal:
 
 ```bash
 cd frontend
@@ -27,157 +131,312 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000. Health: http://localhost:8000/health. Interactive API docs: http://localhost:8000/docs.
+On PowerShell, replace the copy command with `Copy-Item .env.example .env.local`.
+Do not overwrite an existing configured environment file when updating the application.
 
-Seeds are inserted once on a fresh database: a demo user, three upcoming meetings and two completed meetings. Seed dates are relative to initial startup. A restart never overwrites existing meetings. SQLite files are excluded from version control.
+Open [localhost:3000](http://localhost:3000). API health: [localhost:8000/health](http://localhost:8000/health).
+Interactive API documentation: [localhost:8000/docs](http://localhost:8000/docs).
 
-## Implemented workflows
+### Environment variables
 
-- Dashboard with instant meeting creation, Join, Schedule, upcoming and recent meetings.
-- Unique 11-digit IDs, invite links, copyable invitations, meeting detail pages.
-- Join by ID or invite URL, existence/ended validation, display name, media preview and device selection.
-- Scheduling: topic, optional description, date/time, IANA timezone, duration, host video preference.
-- Real browser WebRTC audio/video through a peer mesh; FastAPI WebSockets carry signaling and participant events.
-- Microphone/camera controls, participant list, browser screen sharing, invite, leave.
-- Meeting-wide live text chat, six emoji reactions and raise/lower hand indicators.
-- Server-authorized host commands: mute all, remove participant, end for everyone.
-- Signup/signin/signout, account settings and password changes; account-owned meetings and responsive portal/meeting room.
-- SQLite participant join/leave/removal history and meeting status/start/end timestamps.
+| App | Variable | Local default / purpose |
+|---|---|---|
+| Backend | `DATABASE_URL` | `sqlite:///./zoom.db`; production must use a persistent volume |
+| Backend | `ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000`; exact permitted browser origins |
+| Backend | `FRONTEND_URL` | `http://localhost:3000`; invitation origin |
+| Backend + frontend server | `HOST_API_KEY` | `local-development-only`; replace with the same long random secret on both services in production |
+| Backend | `ICE_SERVERS_JSON` | JSON array of STUN/TURN server objects; local default is public STUN only |
+| Backend | `DEMO_PASSWORD` | Optional passphrase of at least 12 characters for explicit demo-account signin |
+| Frontend server | `BACKEND_URL` | `http://127.0.0.1:8000`; HTTP proxy destination |
+| Frontend browser | `NEXT_PUBLIC_WS_URL` | Example file sets `ws://localhost:8000`; use the backend's `wss://` URL in production |
+| Frontend server | `APP_ORIGIN` | Exact frontend origin; production example: `https://your-app.vercel.app` |
 
-## Architecture and interview explanation
+The backend validates the ICE JSON array and STUN/TURN URL schemes at startup. TURN credentials supplied
+here are returned to admitted browsers; use suitable temporary credentials. Never expose `HOST_API_KEY`
+through a `NEXT_PUBLIC_` variable. Environment files and SQLite files are gitignored.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    B[Browser: host or guest] -->|HTTP| N[Next.js pages and API proxy]
+    N -->|Server-only gateway key and optional session| F[FastAPI HTTP endpoints]
+    F --> D[(SQLite persistent storage)]
+    B -->|WebSocket signaling and room events| W[FastAPI room registry]
+    B <-->|WebRTC media directly or through TURN| P[Other participant browsers]
+```
+
+HTTP calls use Next.js `/api/backend/*`, which forwards requests to FastAPI. The proxy keeps the gateway
+key server-side and manages optional HttpOnly session cookies. WebSockets connect directly to FastAPI,
+so their browser origin must match `ALLOWED_ORIGINS`. Media uses WebRTC; it does not flow through the HTTP proxy.
+
+### Project layout
 
 ```text
-frontend/
-  src/app/          Pages, portal layouts, and the server API proxy
-  src/components/   Dashboard, navigation, forms, and meeting room UI
-  src/hooks/        Browser media lifecycle and WebRTC signaling
-  src/lib/          API contracts, invitations, and client helpers
 backend/
-  app/main.py       HTTP routes and WebSocket admission/events
-  app/services/     Meeting creation and ID allocation
-  app/models.py     SQLAlchemy users, meetings, and participant history
-  app/schemas.py    Request validation
-  app/rooms.py      In-memory connected-room registry
-  migrations/       Versioned SQLite schema
-render.yaml         Backend deployment and persistent disk configuration
+  app/
+    main.py          HTTP routes, startup and WebSocket handling
+    auth.py          Optional account/session endpoints
+    config.py        Environment configuration and ICE validation
+    db.py            SQLAlchemy engine and SQLite configuration
+    models.py        Users, meetings, participants and auth sessions
+    schemas.py       Request validation
+    security.py      Password/token hashing and user authorization
+    rooms.py         Connected participants and transient chat
+    seed.py          Demo user and sample meetings
+    services/        Meeting creation and ID allocation
+  migrations/versions/  001 initial · 002 auth · 003 profile · 004 host admission
+  ci/verify.py        Tracked disposable-database CI smoke checks
+  Dockerfile          Backend container startup
+  railway.json        Backend deployment configuration
+frontend/
+  src/app/            Routes, shared styles and server API proxy
+  src/components/     Workspace, forms, profiles and meeting UI
+  src/hooks/          Media lifecycle and WebRTC signaling
+  src/lib/            API contracts and invitation helpers
+.github/workflows/    CI and Railway/Vercel deployment workflows
+DEPLOYMENT.md         Cloud setup and release instructions
+corefeatures.md       Feature and submission checklist
 ```
 
-Meeting creation lives in a service so HTTP handling stays separate from database allocation. IDs are generated with Python's `secrets`, checked for existing records, and enforced by a unique database constraint. An insertion collision rolls back and retries, with a bounded attempt limit; unrelated integrity errors are not masked. The host credential is returned once during creation and stored as a hash in SQLite.
+Local test sources/configurations, generated reports, screenshots and planning documents remain gitignored. The CI smoke verifier remains included.
 
-Planning documents, screenshots, agent instructions, test reports, and existing test files stay local through `.gitignore`. They are intentionally excluded from this submission.
+### Key flows
 
-## Authentication
+**Create → join → call → end.** Meeting creation saves metadata and a hashed host credential. The creating
+browser keeps the returned host credential in sessionStorage. Before connecting a socket, each participant
+obtains a separate admission token using a display name and, for hosts, the host credential. The first
+WebSocket frame authenticates that admission. Peers exchange signaling and media tracks; host commands
+are checked on the server. End-for-everyone persists the ended state and closes connected sockets.
 
-Login is optional. Open `/` to use the full meeting workflow without an account: create, schedule, host, share invitations, and join calls. Anonymous visitors use the shared seeded demo workspace, including its profile and meetings. All anonymous visitors therefore share that identity and can reclaim its meetings' host access. This is demo behavior, not isolation between anonymous visitors.
+**Schedule.** The form converts the selected local date/time and IANA timezone to UTC. FastAPI validates
+future scheduling and duration, generates a meeting code, and commits the record. Details and upcoming
+lists load the saved data; invitations can be copied afterward.
 
-Open `/signup` or `/signin` for a personal account with its own profile and meetings. Valid sessions use that account; missing, expired or revoked sessions fall back to the demo workspace for meeting workflows. Strict account operations (session identity and password changes) still require login. Anonymous demo visitors cannot obtain host credentials for personal-account meetings. Signup/signin pages offer Continue without an account.
+**Recover.** Disconnection closes peer connections and offers a fresh room navigation. Within the same
+browser session, host rejoin preserves host access. Resetting host access invalidates old pending host
+admissions; rejected duplicate sockets cannot remove the original participant. Ended meetings reject rejoining.
 
-Passwords require 12–128 characters and use salted scrypt hashes. SQLite stores hashed, random session credentials with a seven-day expiry. The Next.js server proxy forwards the session to FastAPI; the browser receives an HttpOnly, SameSite=Lax cookie (Secure in production), never a session token in JSON or localStorage. The gateway key remains server-only and does not itself authorize a user. Signout revokes the current session and returns to the public demo dashboard. Changing a password revokes all account sessions and returns to signin. Room participant credentials remain separate capabilities for the lifetime of a meeting; password changes do not terminate already connected calls.
+---
 
-Signup/signin are limited to ten attempts per normalized email per minute in the single-process API. This is a basic demo throttle, not a distributed abuse-prevention service. Signup conflicts return a generic account-creation error; signin failures do not disclose whether an account exists. Non-GET proxy requests check browser Origin against the configured application origin. Configure `APP_ORIGIN` and HTTPS in production.
+## Database schema
 
-To sign in explicitly as the seeded demo account, optionally set `DEMO_PASSWORD` (at least 12 characters) in the backend environment before startup, then sign in as `demo@example.com`. There is no built-in demo password. Anonymous use of the demo workspace does not create a login session. A pre-existing seed user's missing password is provisioned only through this trusted environment setting; existing credentials are never overwritten. Alternatively, use your own new account. Existing meeting ownership is preserved by Alembic migration 002.
+Four application tables plus Alembic's migration-version table. Meeting/user/session primary keys are
+integers; participant IDs are UUID strings. Timestamps use ISO-formatted UTC values.
 
-Email/password authentication is implemented. Email verification, forgotten-password email recovery, OAuth/social login and MFA are not implemented. No verification or recovery emails are sent. These require a separately configured workflow/provider; the reference social-login buttons and email-code screens are not presented as working features.
+```mermaid
+erDiagram
+    users ||--o{ meetings : hosts
+    meetings ||--o{ participants : admits
+    users |o--o{ participants : identifies_host
+    users ||--o{ auth_sessions : authenticates
 
-## Database design and assignment checklist
+    users {
+        int id PK
+        string email UK
+        string display_name
+        string password_hash "nullable"
+        string timezone
+        string availability
+        string status_message
+        string work_location
+    }
+    meetings {
+        int id PK
+        string code UK
+        int host_user_id FK
+        string title
+        string description
+        string scheduled_start "nullable UTC"
+        int duration_minutes
+        string status
+        string host_token_hash
+    }
+    participants {
+        string id PK
+        int meeting_id FK
+        int user_id FK "nullable"
+        string display_name
+        string role
+        string token_hash UK
+        string host_admission_hash "nullable"
+        string joined_at "nullable"
+        string left_at "nullable"
+        string removed_at "nullable"
+    }
+    auth_sessions {
+        int id PK
+        int user_id FK
+        string token_hash UK
+        string expires_at
+    }
+```
 
-| Table | Purpose and relationships |
-| --- | --- |
-| `users` | Unique email, display name, timezone, optional password hash for the seeded demo identity. |
-| `meetings` | Unique indexed 11-digit code; `host_user_id` references `users`; scheduling metadata, host credential hash and lifecycle timestamps. |
-| `participants` | Per-admission UUID and unique credential hash; references a meeting and optionally its signed-in host user; join, leave and removal history. |
-| `auth_sessions` | Unique session credential hash; references `users`; expiry enables revocation and account-session validation. |
+| Table | Purpose and constraints |
+|---|---|
+| `users` | Demo/personal profiles; unique email; optional password hash |
+| `meetings` | Unique indexed 11-digit code; host FK; title, description, timezone, duration, video preference and lifecycle timestamps |
+| `participants` | Meeting FK and optional user FK; unique admission-token hash; join/leave/removal history; host-admission binding |
+| `auth_sessions` | User FK, unique session-token hash and expiry; supports revocation |
 
-Foreign keys are enabled on every SQLite connection. Meeting participant records belong to their meeting; connected sockets are kept separately in the single-worker registry. Alembic migration 001 creates the meeting schema; 002 adds optional password credentials and account sessions. Seeds are inserted on fresh startup and never overwrite existing meetings or account credentials.
+SQLite enables foreign keys, WAL and a busy timeout. Alembic manages schema changes: `001` initial tables,
+`002` optional authentication, `003` profile preferences, `004` host-admission binding. Role/status/duration
+rules are enforced through application validation; not every rule has a database-level CHECK constraint.
+Connected sockets, reactions, hand states and temporary chat are not durable database records.
 
-The application supports optional Login/Signup, default-user access without login, and host-only mute-all/removal. Portal, forms and call controls adapt to mobile/tablet/desktop sizes. UI styling follows the supplied Zoom references, with unsupported product controls shown as explicit previews. This is an original assignment implementation using the listed framework dependencies, not Zoom's source code.
+---
 
-Local acceptance tests cover two synthetic browser participants receiving remote video and audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. This does not certify real-device/cross-network connectivity or exact pixel equality with Zoom. Test suites and reports stay local according to the requested Git ignore policy.
+## API overview
 
-## Verification
+HTTP routes below are on FastAPI. The frontend accesses them through `/api/backend`.
+Portal endpoints require the server gateway key and resolve either the optional account or demo user;
+meeting details and guest admission are public.
 
-The commands below apply to the local development workspace. The existing test suites and Playwright configuration are intentionally excluded from the GitHub submission. Production build, type checks, and formatting checks are available in a fresh checkout. Python lint/format checks require installing Ruff separately.
+| Method | Path | Description |
+|---|---|---|
+| GET | `/health` | API health |
+| GET / PATCH | `/api/profile` | Read/update current workspace profile |
+| GET | `/api/meetings` | Current workspace's meetings |
+| POST | `/api/meetings` | Create an instant or scheduled meeting |
+| GET | `/api/meetings/{code}` | Public meeting metadata; no host credential |
+| POST | `/api/meetings/{code}/host` | Owner reclaims host access; rejects ended meetings or an already connected host |
+| POST | `/api/meetings/{code}/join` | Issue guest/host admission with display-name validation |
+| POST | `/api/auth/signup` | Create an optional personal account |
+| POST | `/api/auth/signin` | Create an account session |
+| GET | `/api/auth/me` | Read authenticated identity |
+| POST | `/api/auth/signout` | Revoke the current session |
+| POST | `/api/auth/password` | Change password and revoke account sessions |
+| WS | `/ws/meetings/{code}` | Admission, offer/answer/ICE, media state, chat, reactions, hands and host commands |
 
-Backend:
+Errors use FastAPI's `detail` response with appropriate HTTP status codes; validation details can be an
+array. The frontend turns those details into readable messages. Socket authentication uses the first frame,
+not credentials in logged URLs.
+
+---
+
+## Testing
+
+Latest local acceptance run: **60 pytest tests and 9 Playwright cases passed** on 9 October 2026.
+The browser cases ran against a production Next.js build and an isolated backend database. They cover
+mandatory workflows, optional auth, empty states, host refresh/rejoin, remote video, received audio packets,
+camera toggles, screen sharing, mute/removal/end, and six viewport/theme combinations.
+
+Production build, TypeScript, Prettier, Ruff, migration smoke checks and database integrity checks passed.
+This is local automated evidence, not hosted or physical-device certification, and not a claim that every
+older browser suite was rerun.
+
+### Checks available in a fresh checkout
 
 ```bash
+# Backend: isolated migration, seed and API smoke verification
 cd backend
-.venv/bin/python -m pytest tests -q
-```
+python ci/verify.py
 
-Frontend:
-
-```bash
+# Frontend: formatting, types and production build
 cd frontend
-npm run typecheck
+npm ci
 npm run format:check
+npx next typegen
+npm run typecheck
 npm run build
-npx playwright install chromium
-npm run test:e2e
 ```
 
-Run `npm run format` to apply the frontend formatting conventions. `.editorconfig` sets shared whitespace rules. With Ruff installed, use `ruff check app migrations` and `ruff format --check app migrations` from `backend`.
+Run each block from the repository root in its own terminal. With Ruff installed, backend lint/format checks
+are `ruff check app migrations ci` and `ruff format --check app migrations ci`.
 
-Browser integration tests expect both servers already running on ports 3000/8000. The auth suite creates and removes isolated test accounts; older feature suites reflect earlier navigation and may need fixture updates. Historical results for the earlier default-user mode are not a claim that those browser fixtures were rerun unchanged. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
+### Comprehensive tests
 
-Manual acceptance: open two browser profiles/devices, start a meeting, copy its invitation, join as a guest, speak, toggle cameras, share a screen, stop sharing, mute all, remove a participant and end the meeting. Test denied permissions and different networks before submission.
-
-## Deployment: Vercel frontend + Render backend
-
-1. Push this repository to a public GitHub repository (exclude `.env`, `.env.local`, databases and secrets).
-2. Create a Render Blueprint using `render.yaml`. It specifies a paid web service with a persistent disk. SQLite lives at `/var/data/zoom.db`; the Docker start command runs Alembic before Uvicorn.
-3. Create the Vercel project with root directory `frontend`, framework Next.js, build command `npm run build`.
-4. Configure Vercel:
-   - `BACKEND_URL=https://your-api.onrender.com`
-   - `NEXT_PUBLIC_WS_URL=wss://your-api.onrender.com`
-   - `HOST_API_KEY`: the generated Render secret, identical on both services
-   - `APP_ORIGIN=https://your-app.vercel.app`
-5. Configure Render:
-   - `FRONTEND_URL=https://your-app.vercel.app`
-   - `ALLOWED_ORIGINS=https://your-app.vercel.app` (exact origins, comma-separated if needed)
-   - `ICE_SERVERS_JSON`: STUN plus your TURN server's credentials
-6. Redeploy the frontend after public environment variables change. Verify `/health`, meeting persistence after backend restart, and a call across different networks.
-
-Use one backend instance and one worker. The room registry is in memory. Multiple instances would need shared signaling coordination. Persistent disks also require a supported paid service. TURN must be supplied for reliable connectivity across restrictive networks; the example configuration contains only public STUN.
-
-For a temporary test-browser install location:
+Comprehensive test sources, browser configurations and generated results remain **gitignored**.
+They are available in this development workspace, not in a fresh GitHub clone:
 
 ```bash
-cd frontend
-PLAYWRIGHT_BROWSERS_PATH=/private/tmp/zoom-playwright npx playwright install chromium
-PLAYWRIGHT_BROWSERS_PATH=/private/tmp/zoom-playwright npm run test:e2e
+# From backend/, with the environment activated
+python -m pytest tests -q
+
+# From frontend/, after installing Chromium and starting the isolated test services
+npx playwright install chromium
+npx playwright test --config=playwright.readiness.config.ts
 ```
 
-## Assumptions and limitations
+The latest readiness configuration expects a production frontend on `localhost:3002`, HTTP backend on
+`127.0.0.1:9001`, WebSockets on `localhost:9001`, and backend allowed origin `http://localhost:3002`.
+Use a disposable `DATABASE_URL`; the browser cases create real accounts and meetings. These services
+are configured separately, not automatically launched by the test command. Older suites use different
+ports/fixtures and should not be run against a live database.
 
-- Small demo meetings; no Zoom-scale participant or reliability claim. Peer mesh bandwidth grows with participant count.
-- No OAuth, email verification/recovery, MFA, recording, phone dialing, recurring meetings, waiting rooms, calendar email delivery or whiteboard. Reference-only controls open a Preview only notice; unsupported scheduling options are disabled and never submitted.
-- All calls happen in the browser. Camera/microphone access needs HTTPS (localhost is allowed); browser screen sharing requires a user action and may not be supported on mobile.
-- Host mute requests are honored by this client; no peer mesh implementation can prevent a modified malicious client from transmitting audio. Hosts cannot remotely enable another person's microphone.
-- Removing a participant invalidates that participant session. With anonymous names and a shared invitation, a person can join again with a new guest session; persistent identity-based bans require authentication.
-- Leaving as host does not end the meeting. The meeting owner can reclaim host access from the portal. End-for-everyone permanently closes that meeting.
-- Duration describes the planned meeting length; it does not automatically terminate a live call or enforce subscription limits.
-- Socket disconnection closes the call and offers rejoin. There is no automatic reconnection that silently reuses a closed participant session.
-- Brand visuals are used for an assignment demo. Footer identifies this implementation as a clone.
-- Deployment configuration is included; provisioning accounts, a public repository and a hosted URL is a separate step requiring your accounts.
+Manual acceptance still requires two physical devices and separate networks: check permissions, speak,
+toggle cameras, share/stop sharing, mute, remove and end the meeting.
 
-## Meeting collaboration
+---
 
-Chat, emoji reactions and raised hands travel over the admitted participant WebSocket, separately from WebRTC media. The server supplies sender IDs/names; clients cannot select another sender. Chat messages are plain text (1–2000 characters), rendered with React text escaping. A room retains its latest 100 messages for late joiners while anyone remains connected; history is discarded when the room empties or the backend restarts. There are no private messages or durable chat archives.
+## Deployment
 
-Each participant can raise/lower their own hand; the state appears on their video tile and in Participants. Six supported reactions appear on the sender's tile for five seconds. Chat has a half-second send interval and reactions a one-second interval per connected participant. These limits bound routine traffic; anonymous guests can obtain new sessions.
+Target: **Vercel frontend + Railway backend with persistent SQLite storage**. Deployment configuration
+exists, but the public deployment has not been verified. Follow [DEPLOYMENT.md](DEPLOYMENT.md) for the
+complete setup, service-root rules and GitHub Actions credentials.
 
-## Appearance and workspace navigation
+| Service | Required setup |
+|---|---|
+| Railway | One replica/worker; persistent volume mounted at `/data`; `DATABASE_URL=sqlite:////data/zoom.db`; public HTTPS domain; `/health` check |
+| Backend variables | Strong `HOST_API_KEY`, frontend HTTPS URL, exact allowed origins, configured STUN/TURN |
+| Vercel | Next.js project with `frontend` root; `BACKEND_URL`, `NEXT_PUBLIC_WS_URL`, matching server-only key and `APP_ORIGIN` |
+| GitHub Actions | Frontend/backend checks; Railway deployment followed by Vercel when explicitly enabled |
 
-The application is named ZOOM-CLONE. CSS `prefers-color-scheme` follows the operating system's light/dark setting, including changes made while the page is open. Shared surface/text/border variables style workspace pages, forms, menus, authentication, previews and live calls without a saved theme override or hydration flash. `workspace.css` contains the reference layout and theme styling.
+Docker startup applies Alembic migrations while the volume is mounted, then starts Uvicorn on the platform's
+port. Back up persistent storage before schema changes. Backend restarts disconnect live calls.
 
-Join and Schedule use native modal dialogs with focus containment and Escape/close navigation back home. Join options select the initial audio/video state in the media preview; users can enable devices afterward. Search filters the user's upcoming/previous meetings by title or ID. Scheduling confirmation and meeting details open over the home workspace. In-call More offers meeting information, device settings and copying invitations; Host tools exposes the existing authorized controls. Unsupported screenshot products, paid upgrades, recording, AI tools, calendar connections and breakout rooms are not presented as working buttons.
+Do not enable automatic deployment until the accounts, secrets and volume are configured. The repository
+also contains a Render alternative (`render.yaml`); Railway is the target of the Actions deployment workflow.
 
-The Meetings workspace includes a mini month calendar, day navigation, Upcoming/Previous filters, refresh, and an iCalendar (`.ics`) download. It defaults to Upcoming so future meetings remain easy to find; choosing a date opens that day's agenda. Calendar dates follow the browser's time zone; meeting cards retain their saved meeting time zone. Export is a downloaded calendar file, not a connected Google/Outlook account.
+---
 
-The profile menu saves availability, a status message, and work location in SQLite (migration `003`). Availability is manually selected, not inferred presence. Anonymous visitors share demo-user preferences; optional signed-in accounts save their own preferences. Subscription upgrades and native-app update/download controls are visual placeholders only.
+## Design decisions
 
-## GitHub Actions: Railway + Vercel
+- **Optional login with a default workspace:** satisfies the assignment's no-login workflow while allowing personal accounts.
+- **Separate credentials:** gateway key for the server proxy, optional account session, host credential and per-participant admission token have distinct roles.
+- **Unique meeting codes:** cryptographic random generation, database uniqueness and bounded collision retries avoid silently overwriting meetings.
+- **SQLite records, in-memory connections:** scheduling/history persist; live sockets are transient. One API worker keeps signaling and authorization consistent.
+- **WebRTC peer mesh:** keeps media separate from signaling and makes a small assignment implementation explainable; it does not claim Zoom-scale capacity.
+- **UTC plus saved timezone:** scheduling stores an unambiguous instant while retaining the timezone needed for display.
+- **Native dialogs and shared CSS tokens:** preserve reference interactions and system themes without another component framework.
+- **Host-admission binding:** a reset host credential invalidates earlier pending host admissions; guests are unaffected.
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the Railway volume, Vercel project, environment variables and GitHub credentials setup. CI checks frontend formatting/types/build and backend lint/migrations/API smoke behavior on every push or pull request. After setup, successful `main` pushes deploy the Railway backend followed by the Vercel frontend when `ENABLE_PRODUCTION_DEPLOYMENTS=true`. Manual deployment is available through **Actions → CI and deployment → Run workflow**. Full local suites remain ignored; CI's tracked smoke verification does not replace real-device testing.
+---
+
+## Assumptions
+
+- Login is optional. Anonymous visitors share the demo profile and its meetings, and can reclaim host access
+  to that workspace's meetings. This is intentional demo behavior, not private anonymous-user isolation.
+- Signed-in accounts have their own profile/meetings; anonymous visitors cannot reclaim a personal account's meetings.
+- Passwords use salted scrypt. Account sessions expire after seven days; the proxy uses HttpOnly,
+  SameSite=Lax cookies, Secure in production. Signout/password changes revoke account sessions, but
+  password changes do not terminate already admitted meeting participants.
+- Signup/signin has a basic per-email, single-process throttle. It is not distributed abuse protection.
+- Planned duration does not automatically terminate a call. Host leave does not end the meeting;
+  end-for-everyone does. Empty rooms can remain marked active until explicitly ended.
+- Chat keeps the latest 100 messages only while the room remains populated. Chat is plain text;
+  reactions expire after five seconds. Chat and reaction send intervals bound routine traffic.
+- Availability is manually selected; calendar export is a downloaded file, not a connected calendar account.
+- ZOOM-CLONE is an assignment implementation. Reference-inspired UI is not a claim of affiliation or exact pixel equality.
+
+---
+
+## Known limitations and future work
+
+- Public deployment, physical-device testing and cross-network TURN verification remain pending.
+- STUN alone cannot ensure restrictive-network connectivity. Camera/microphone access needs HTTPS
+  (localhost is allowed); screen sharing requires a user gesture and browser support.
+- Peer mesh bandwidth grows with participant count. No tested participant limit or reliability guarantee is claimed.
+- The global room lock and in-memory registry require one backend worker/replica; load behavior is untested.
+- Host mute relies on the provided client honoring the command. Hosts cannot remotely enable microphones,
+  and a modified malicious client can disregard peer-mesh mute requests.
+- Removal invalidates that admission; anonymous users can obtain a new guest admission. There are no persistent identity-based bans.
+- Rejoin creates a fresh room session; there is no automatic reconnection. Host credentials in sessionStorage
+  are specific to the creating browser session; owner recovery is available from the workspace.
+- No recording, phone dialing, recurring meetings, waiting rooms, breakout rooms, durable/private chat,
+  connected calendars, invitation-email delivery, whiteboards or AI meeting tools.
+- No OAuth, email verification, email password recovery or MFA. No verification/recovery emails are sent.
+- Exact visual fidelity still has differences in spacing, typography and assets. Comprehensive tests remain local;
+  GitHub CI runs the included smoke checks rather than the complete acceptance suite.

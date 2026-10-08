@@ -8,7 +8,7 @@
 - Backend: locked dependencies, Ruff, Alembic on a temporary SQLite database and core API verification (Python 3.11).
 - Production: after both checks succeed, calls `deploy.yml` on `main` when enabled. Railway deploys first and waits for deployment; Vercel then pulls production settings, builds and deploys prebuilt output.
 
-The comprehensive local test suites remain gitignored. CI runs the tracked `backend/ci/verify.py` smoke verification, not those local suites or browser/device tests. The script creates and removes its own temporary database.
+Comprehensive test sources, browser configurations and generated results remain gitignored. CI runs the included `backend/ci/verify.py` smoke verification, not the full local suites or browser/device tests. The script creates and removes its own temporary database.
 
 ## 1. Create Railway backend
 
