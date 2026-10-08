@@ -132,6 +132,9 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
             <button className="primary" disabled={busy}>
               {busy ? "Please wait…" : signup ? "Create Account" : "Sign In"}
             </button>
+            <Link href="/" className="text-button">
+              Continue without an account
+            </Link>
             <p className="form-hint">Zoom clone · Fullstack assignment demo</p>
           </form>
         </section>

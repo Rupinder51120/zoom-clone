@@ -32,7 +32,7 @@ export function Header({ portal = false }: { portal?: boolean }) {
     try {
       await api("/api/auth/signout", { method: "POST" });
       sessionStorage.clear();
-      window.location.assign("/signin");
+      window.location.assign("/");
     } catch (e) {
       setError((e as Error).message);
     }

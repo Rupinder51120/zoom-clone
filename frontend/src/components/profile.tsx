@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { UserRound, ShieldCheck } from "lucide-react";
 import { api, Profile as ProfileType } from "@/lib/api";
 export default function Profile() {
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    api("/api/auth/me")
+      .then(() => setSignedIn(true))
+      .catch(() => setSignedIn(false));
+  }, []);
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -114,7 +120,7 @@ export default function Profile() {
           {error}
         </p>
       )}
-      <PasswordSettings />
+      {signedIn && <PasswordSettings />}
     </>
   );
 }

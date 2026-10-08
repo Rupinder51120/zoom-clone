@@ -16,7 +16,7 @@ from .db import SessionLocal, get_db
 from .models import Meeting, Participant, User, utc_now
 from .rooms import Connection, registry
 from .schemas import JoinRequest, MeetingCreate, ProfileUpdate
-from .security import current_user, digest
+from .security import digest, portal_user
 from .seed import seed
 from .services.meetings import MeetingIdUnavailable
 from .services.meetings import create_meeting as persist_meeting
@@ -88,7 +88,7 @@ def health(db: DbSession):
 
 
 @app.get("/api/profile")
-def profile(db: DbSession, user: User = Depends(current_user)):
+def profile(db: DbSession, user: User = Depends(portal_user)):
     return {
         "display_name": user.display_name,
         "email": user.email,
@@ -98,7 +98,7 @@ def profile(db: DbSession, user: User = Depends(current_user)):
 
 @app.patch("/api/profile")
 def update_profile(
-    body: ProfileUpdate, db: DbSession, user: User = Depends(current_user)
+    body: ProfileUpdate, db: DbSession, user: User = Depends(portal_user)
 ):
     user.display_name, user.timezone = body.display_name, body.timezone
     db.commit()
@@ -106,7 +106,7 @@ def update_profile(
 
 
 @app.get("/api/meetings")
-def meetings(db: DbSession, user: User = Depends(current_user)):
+def meetings(db: DbSession, user: User = Depends(portal_user)):
     return [
         serialize(m)
         for m in db.scalars(
@@ -119,7 +119,7 @@ def meetings(db: DbSession, user: User = Depends(current_user)):
 
 @app.post("/api/meetings", status_code=201)
 def create_meeting(
-    body: MeetingCreate, db: DbSession, user: User = Depends(current_user)
+    body: MeetingCreate, db: DbSession, user: User = Depends(portal_user)
 ):
     if body.scheduled_start and body.scheduled_start <= datetime.now(timezone.utc):
         raise HTTPException(422, "Choose a future date and time")
@@ -136,7 +136,7 @@ def meeting_details(code: str, db: DbSession):
 
 
 @app.post("/api/meetings/{code}/host")
-def host_meeting(code: str, db: DbSession, user: User = Depends(current_user)):
+def host_meeting(code: str, db: DbSession, user: User = Depends(portal_user)):
     meeting = find_meeting(db, code)
     if meeting.host_user_id != user.id:
         raise HTTPException(403, "Only the meeting owner can host this meeting")

@@ -68,3 +68,21 @@ def current_user(
     if not user:
         raise HTTPException(401, "Please sign in to continue")
     return user
+
+
+def portal_user(
+    db: Session = Depends(get_db),
+    x_session_token: str = Header(default=""),
+    gateway=Depends(require_gateway),
+) -> User:
+    """Use an account when signed in; otherwise use the shared demo identity."""
+    if x_session_token:
+        try:
+            return current_user(db, x_session_token)
+        except HTTPException as error:
+            if error.status_code != 401:
+                raise
+    user = db.get(User, 1)
+    if not user:
+        raise HTTPException(503, "The demo workspace is unavailable")
+    return user
