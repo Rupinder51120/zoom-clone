@@ -67,15 +67,32 @@ Planning documents, screenshots, agent instructions, test reports, and existing 
 
 ## Authentication
 
-Open `/signup` to create an account or `/signin` to log in. New accounts start with their own empty meeting list. Joining a shared invitation still works without an account. Account pages require a valid session, and meeting lists, creation, scheduling, profile updates and host credential issuance use the signed-in user. Another account cannot reclaim a meeting's host access.
+Login is optional. Open `/` to use the full meeting workflow without an account: create, schedule, host, share invitations, and join calls. Anonymous visitors use the shared seeded demo workspace, including its profile and meetings. All anonymous visitors therefore share that identity and can reclaim its meetings' host access. This is demo behavior, not isolation between anonymous visitors.
 
-Passwords require 12–128 characters and use salted scrypt hashes. SQLite stores hashed, random session credentials with a seven-day expiry. The Next.js server proxy forwards the session to FastAPI; the browser receives an HttpOnly, SameSite=Lax cookie (Secure in production), never a session token in JSON or localStorage. The gateway key remains server-only and does not itself authorize a user. Signout revokes the current session. Changing a password revokes all account sessions and returns to signin. Room participant credentials remain separate capabilities for the lifetime of a meeting; password changes do not terminate already connected calls.
+Open `/signup` or `/signin` for a personal account with its own profile and meetings. Valid sessions use that account; missing, expired or revoked sessions fall back to the demo workspace for meeting workflows. Strict account operations (session identity and password changes) still require login. Anonymous demo visitors cannot obtain host credentials for personal-account meetings. Signup/signin pages offer Continue without an account.
+
+Passwords require 12–128 characters and use salted scrypt hashes. SQLite stores hashed, random session credentials with a seven-day expiry. The Next.js server proxy forwards the session to FastAPI; the browser receives an HttpOnly, SameSite=Lax cookie (Secure in production), never a session token in JSON or localStorage. The gateway key remains server-only and does not itself authorize a user. Signout revokes the current session and returns to the public demo dashboard. Changing a password revokes all account sessions and returns to signin. Room participant credentials remain separate capabilities for the lifetime of a meeting; password changes do not terminate already connected calls.
 
 Signup/signin are limited to ten attempts per normalized email per minute in the single-process API. This is a basic demo throttle, not a distributed abuse-prevention service. Signup conflicts return a generic account-creation error; signin failures do not disclose whether an account exists. Non-GET proxy requests check browser Origin against the configured application origin. Configure `APP_ORIGIN` and HTTPS in production.
 
-To access the seeded meetings, optionally set `DEMO_PASSWORD` (at least 12 characters) in the backend environment before startup, then sign in as `demo@example.com`. There is no built-in demo password or automatic login. A pre-existing seed user's missing password is provisioned only through this trusted environment setting; existing credentials are never overwritten. Alternatively, use your own new account. Existing meeting ownership is preserved by Alembic migration 002.
+To sign in explicitly as the seeded demo account, optionally set `DEMO_PASSWORD` (at least 12 characters) in the backend environment before startup, then sign in as `demo@example.com`. There is no built-in demo password. Anonymous use of the demo workspace does not create a login session. A pre-existing seed user's missing password is provisioned only through this trusted environment setting; existing credentials are never overwritten. Alternatively, use your own new account. Existing meeting ownership is preserved by Alembic migration 002.
 
 Email/password authentication is implemented. Email verification, forgotten-password email recovery, OAuth/social login and MFA are not implemented. No verification or recovery emails are sent. These require a separately configured workflow/provider; the reference social-login buttons and email-code screens are not presented as working features.
+
+## Database design and assignment checklist
+
+| Table | Purpose and relationships |
+| --- | --- |
+| `users` | Unique email, display name, timezone, optional password hash for the seeded demo identity. |
+| `meetings` | Unique indexed 11-digit code; `host_user_id` references `users`; scheduling metadata, host credential hash and lifecycle timestamps. |
+| `participants` | Per-admission UUID and unique credential hash; references a meeting and optionally its signed-in host user; join, leave and removal history. |
+| `auth_sessions` | Unique session credential hash; references `users`; expiry enables revocation and account-session validation. |
+
+Foreign keys are enabled on every SQLite connection. Meeting participant records belong to their meeting; connected sockets are kept separately in the single-worker registry. Alembic migration 001 creates the meeting schema; 002 adds optional password credentials and account sessions. Seeds are inserted on fresh startup and never overwrite existing meetings or account credentials.
+
+The application supports optional Login/Signup, default-user access without login, and host-only mute-all/removal. Portal, forms and call controls adapt to mobile/tablet/desktop sizes. UI styling follows the supplied Zoom references, with unsupported product controls removed as requested. This is an original assignment implementation using the listed framework dependencies, not Zoom's source code.
+
+Local acceptance tests cover two synthetic browser participants receiving remote video and audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. This does not certify real-device/cross-network connectivity or exact pixel equality with Zoom. Test suites and reports stay local according to the requested Git ignore policy.
 
 ## Verification
 
@@ -101,7 +118,7 @@ npm run test:e2e
 
 Run `npm run format` to apply the frontend formatting conventions. `.editorconfig` sets shared whitespace rules. With Ruff installed, use `ruff check app migrations` and `ruff format --check app migrations` from `backend`.
 
-Browser integration tests expect both servers already running on ports 3000/8000. The auth suite creates and removes isolated test accounts; older feature suites require authenticated setup after this change. Historical results for the earlier default-user mode are not a claim that those browser fixtures were rerun unchanged. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
+Browser integration tests expect both servers already running on ports 3000/8000. The auth suite creates and removes isolated test accounts; older feature suites reflect earlier navigation and may need fixture updates. Historical results for the earlier default-user mode are not a claim that those browser fixtures were rerun unchanged. They use synthetic camera/microphone streams and create real test meetings in the local database. They check ID validation, scheduling persistence across reload, mobile overflow, remote video frames and incoming audio packets, camera toggles, screen sharing, mute-all, removal and end-for-everyone. Do not run them against a live user database.
 
 Manual acceptance: open two browser profiles/devices, start a meeting, copy its invitation, join as a guest, speak, toggle cameras, share a screen, stop sharing, mute all, remove a participant and end the meeting. Test denied permissions and different networks before submission.
 
