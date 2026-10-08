@@ -17,6 +17,8 @@ from .rooms import Connection, registry
 from .schemas import JoinRequest, MeetingCreate, ProfileUpdate
 from .security import digest, require_default_user
 from .seed import seed
+from .services.meetings import MeetingIdUnavailable
+from .services.meetings import create_meeting as persist_meeting
 
 
 @asynccontextmanager
@@ -115,27 +117,10 @@ def meetings(db: DbSession):
 def create_meeting(body: MeetingCreate, db: DbSession):
     if body.scheduled_start and body.scheduled_start <= datetime.now(timezone.utc):
         raise HTTPException(422, "Choose a future date and time")
-    while True:
-        code = str(secrets.randbelow(90000000000) + 10000000000)
-        if not db.scalar(select(Meeting.id).where(Meeting.code == code)):
-            break
-    token = secrets.token_urlsafe(32)
-    meeting = Meeting(
-        code=code,
-        host_user_id=1,
-        title=body.title,
-        description=body.description,
-        scheduled_start=body.scheduled_start.astimezone(timezone.utc).isoformat()
-        if body.scheduled_start
-        else None,
-        timezone=body.timezone,
-        duration_minutes=body.duration_minutes,
-        video_on=body.video_on,
-        status="scheduled" if body.scheduled_start else "active",
-        host_token_hash=digest(token),
-    )
-    db.add(meeting)
-    db.commit()
+    try:
+        meeting, token = persist_meeting(db, body)
+    except MeetingIdUnavailable:
+        raise HTTPException(503, "Unable to allocate a meeting ID. Please try again.")
     return serialize(meeting) | {"host_token": token}
 
 
