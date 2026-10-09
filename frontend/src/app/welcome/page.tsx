@@ -20,7 +20,7 @@ export default function Welcome() {
         <Link href="/signin">Sign In</Link>
       </div>
       <header className={styles.header}>
-        <Link href="/welcome" className={styles.brand}>
+        <Link href="/" className={styles.brand}>
           ZOOM-CLONE
         </Link>
         <nav aria-label="Public navigation" className={styles.products}>
@@ -34,7 +34,7 @@ export default function Welcome() {
           )}
         </nav>
         <div className={styles.actions}>
-          <Link href="/" className={styles.outline}>
+          <Link href="/dashboard" className={styles.outline}>
             Open Workplace
           </Link>
           <Link href="/signup" className={styles.primary}>
@@ -56,7 +56,7 @@ export default function Welcome() {
               your team, or plan your next conversation.
             </p>
             <div className={styles.heroActions}>
-              <Link href="/" className={styles.primary}>
+              <Link href="/dashboard" className={styles.primary}>
                 Open Workplace <ArrowRight size={18} />
               </Link>
               <Link href="/join" className={styles.outline}>
@@ -113,7 +113,7 @@ export default function Welcome() {
               [
                 "Meet now",
                 "Create an instant meeting and copy its invitation.",
-                "/",
+                "/dashboard",
                 Video,
               ],
               [
@@ -147,7 +147,7 @@ export default function Welcome() {
           ZOOM-CLONE
         </Link>
         <span>Fullstack assignment demo</span>
-        <Link href="/">Workplace</Link>
+        <Link href="/dashboard">Workplace</Link>
         <Link href="/signin">Sign In</Link>
         <PlaceholderControl label="Privacy & Legal Policies" />
       </footer>

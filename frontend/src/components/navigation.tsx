@@ -26,7 +26,7 @@ import { WorkflowDialog } from "./workflow-dialog";
 
 export function Logo() {
   return (
-    <Link href="/" className="zoom-logo" aria-label="ZOOM-CLONE home">
+    <Link href="/dashboard" className="zoom-logo" aria-label="ZOOM-CLONE home">
       ZOOM-CLONE<span>Workplace</span>
     </Link>
   );
@@ -77,7 +77,7 @@ export function Header({ portal = false }: { portal?: boolean }) {
     try {
       await api("/api/auth/signout", { method: "POST" });
       sessionStorage.clear();
-      window.location.assign("/");
+      window.location.assign("/dashboard");
     } catch (error) {
       setError((error as Error).message);
     }
@@ -182,7 +182,10 @@ export function Sidebar() {
   return (
     <aside className="portal-sidebar">
       <nav aria-label="Sidebar">
-        <Link href="/" className={pathname === "/" ? "selected" : ""}>
+        <Link
+          href="/dashboard"
+          className={pathname === "/dashboard" ? "selected" : ""}
+        >
           <Home size={23} />
           <span>Home</span>
         </Link>

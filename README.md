@@ -88,7 +88,7 @@ Sample data varies between captures and the live demo. Unimplemented product ent
 - **Optional authentication:** signup, signin and signout; personal accounts own their meetings. All mandatory workflows work without login.
 - **Host controls:** backend-authorized mute-all and participant removal.
 - **Responsive appearance:** desktop, tablet and mobile layouts; light/dark theme follows system settings.
-- **Public landing page:** `/welcome` follows Zoom's public navigation and meeting-focused presentation. `/` remains the default-user dashboard; no login is required.
+- **Public landing page:** `/` (also available at `/welcome`) follows Zoom's public navigation and meeting-focused presentation. `/dashboard` is the default-user dashboard; no login is required.
 
 ### Reference-only placeholders
 

@@ -244,7 +244,7 @@ export default function Room({
           <PhoneOff size={42} />
           <h1>Meeting finished</h1>
           <p>{call.finished}</p>
-          <Link className="primary" href="/">
+          <Link className="primary" href="/dashboard">
             Back to Home
           </Link>
           {!call.meetingEnded && meeting?.status !== "ended" && (
