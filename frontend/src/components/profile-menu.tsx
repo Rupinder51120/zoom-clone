@@ -56,9 +56,6 @@ export function ProfileMenu({
           </span>
         </>
       )}
-      <Link href="/welcome" onClick={onClose}>
-        Public landing page
-      </Link>
     </div>
   );
 }

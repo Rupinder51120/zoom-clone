@@ -8,7 +8,7 @@ references, with a navigation rail, centered meeting actions, modal Join/Schedul
 - **Live demo:** [ZOOM-CLONE](https://zoom-clone-bice-mu.vercel.app)
 - **API health:** [Railway health endpoint](https://zoom-clone-production-8be6.up.railway.app/health)
 - **Stack:** Next.js 16 (TypeScript) · FastAPI (Python) · SQLite · SQLAlchemy 2 · Alembic · WebRTC · WebSockets
-- **Verification:** Latest local acceptance run on 9 October 2026: **62 backend tests and 10 production-browser tests passed**. Synthetic media devices were used. The owner subsequently reported a successful Mac + Android call on the same Wi-Fi; the owner also confirmed calls and host controls across different networks. This is user-reported real-device verification, not a capacity or TURN-relay claim.
+- **Verification:** Latest local acceptance run on 9 October 2026: **62 backend tests and 16 production-browser tests passed**. Synthetic media devices were used. The owner subsequently reported a successful Mac + Android call on the same Wi-Fi; the owner also confirmed calls and host controls across different networks. This is user-reported real-device verification, not a capacity or TURN-relay claim.
 - **Feature checklist:** [corefeatures.md](corefeatures.md)
 
 ---
@@ -88,7 +88,7 @@ Sample data varies between captures and the live demo. Unimplemented product ent
 - **Optional authentication:** signup, signin and signout; personal accounts own their meetings. All mandatory workflows work without login.
 - **Host controls:** backend-authorized mute-all and participant removal.
 - **Responsive appearance:** desktop, tablet and mobile layouts; light/dark theme follows system settings.
-- **Public landing page:** `/` (also available at `/welcome`) follows Zoom's public navigation and meeting-focused presentation. `/dashboard` is the default-user dashboard; no login is required.
+- **Entry page:** `/` opens the default-user Zoom-style dashboard directly, with no login required. `/dashboard` remains a compatible dashboard URL. Typography uses native system fonts to match the supplied desktop references.
 
 ### Reference-only placeholders
 
@@ -360,7 +360,7 @@ not credentials in logged URLs.
 
 ## Testing
 
-Latest local acceptance run: **62 pytest tests and 10 Playwright cases passed** on 9 October 2026.
+Latest local acceptance run: **62 pytest tests and 16 Playwright cases passed** on 9 October 2026.
 The browser cases ran against a production Next.js build and an isolated backend database. They cover
 mandatory workflows, optional auth, empty states, host refresh/rejoin, remote video, received audio packets,
 camera toggles, screen sharing, mute/removal/end, and six viewport/theme combinations.

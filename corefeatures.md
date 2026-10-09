@@ -23,7 +23,7 @@
 - [~] Profile/settings, availability/status/work location, calendar export/integration.
 - [~] AI, recording, breakout rooms, unrelated products and paid upgrades.
 
-Public landing page: `/` (alias `/welcome`). Dashboard: `/dashboard`. Placeholders are labeled and do not execute their former actions. Existing backend compatibility handlers are outside the supported product interface.
+Dashboard entry: `/` (also available at `/dashboard`). No marketing or login gate. Placeholders are labeled and do not execute their former actions. Existing backend compatibility handlers are outside the supported product interface.
 
 ## Evidence and deliverables
 

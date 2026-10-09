@@ -30,7 +30,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
         }),
       });
       sessionStorage.clear();
-      window.location.assign("/dashboard");
+      window.location.assign("/");
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -132,7 +132,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
             <button className="primary" disabled={busy}>
               {busy ? "Please wait…" : signup ? "Create Account" : "Sign In"}
             </button>
-            <Link href="/dashboard" className="text-button">
+            <Link href="/" className="text-button">
               Continue without an account
             </Link>
             <p className="form-hint">ZOOM-CLONE · Fullstack assignment demo</p>

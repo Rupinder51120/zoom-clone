@@ -51,7 +51,7 @@ body {
   font-size: 13px;
   letter-spacing: -0.3px;
   line-height: 1.15;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--nav);
   flex-shrink: 0;
 }
@@ -1369,5 +1369,67 @@ textarea::placeholder {
     bottom: 150px;
     width: auto;
     max-height: calc(100dvh - 240px);
+  }
+}
+
+/* Brief surface fades keep controls stationary, like the desktop reference. */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    color 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+.workflow-dialog[open],
+.placeholder-dialog[open],
+.dropdown,
+.host-tools-panel,
+.participants-panel,
+.modal-overlay {
+  animation: surface-appear 120ms ease-out;
+}
+@keyframes surface-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Use the same typography for native controls and custom summaries. */
+summary {
+  font: inherit;
+}
+.action-icon {
+  transition: filter 120ms ease-out;
+}
+:where(button, a, summary):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.workflow-dialog[open]::backdrop,
+.placeholder-dialog[open]::backdrop {
+  animation: surface-appear 120ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .action-icon,
+  .workflow-dialog[open]::backdrop,
+  .placeholder-dialog[open]::backdrop {
+    animation: none;
+    transition: none;
   }
 }
