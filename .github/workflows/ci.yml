@@ -37,7 +37,13 @@ jobs:
       - name: Generate Next.js types for a clean checkout
         run: npx next typegen
       - run: npm run typecheck
-      - run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r ../backend/requirements.lock.txt
+      - run: npx playwright install --with-deps chromium
+      - name: Production build and isolated browser regression suite
+        run: npm run test:e2e
 
   backend:
     name: Backend checks
@@ -54,8 +60,9 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.lock.txt
       - run: pip install -r requirements.lock.txt ruff==0.16.10
-      - run: ruff check app migrations ci
-      - run: ruff format --check app migrations ci
+      - run: ruff check app migrations ci tests/regression
+      - run: ruff format --check app migrations ci tests/regression
+      - run: python -m pytest -q
       - name: Verify migrations and API on a disposable SQLite database
         run: python ci/verify.py
 

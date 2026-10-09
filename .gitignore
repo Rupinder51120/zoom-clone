@@ -25,9 +25,13 @@ AGENTS.md
 CLAUDE.md
 
 # Local test suites and browser configurations
-/backend/tests/
-/frontend/tests/
+/backend/tests/*
+!/backend/tests/regression/
+!/backend/tests/__init__.py
+/frontend/tests/*
+!/frontend/tests/regression/
 /frontend/playwright*.config.ts
+!/frontend/playwright.config.ts
 
 # Generated test reports and caches
 .pytest_cache/

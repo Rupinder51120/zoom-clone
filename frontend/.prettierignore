@@ -2,7 +2,9 @@ node_modules/
 .next/
 package-lock.json
 next-env.d.ts
-tests/
+tests/*
+!tests/regression/
 playwright*.config.ts
+!playwright.config.ts
 test-results/
 playwright-report/

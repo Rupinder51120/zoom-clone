@@ -7,9 +7,9 @@
     "build": "next build --webpack",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test",
-    "format:check": "prettier --check src package.json tsconfig.json postcss.config.mjs .prettierrc.json",
-    "format": "prettier --write src package.json tsconfig.json postcss.config.mjs .prettierrc.json"
+    "test:e2e": "node scripts/e2e.mjs",
+    "format:check": "prettier --check src package.json tsconfig.json postcss.config.mjs .prettierrc.json tests/regression scripts playwright.config.ts",
+    "format": "prettier --write src package.json tsconfig.json postcss.config.mjs .prettierrc.json tests/regression scripts playwright.config.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
