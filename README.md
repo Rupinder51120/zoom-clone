@@ -314,3 +314,7 @@ GitHub Actions runs frontend checks and backend smoke verification. Optional Act
 An independent full-stack assignment implementation inspired by the supplied Zoom references. Zoom's name and design belong to their respective owners; this project is not affiliated with Zoom. Screenshots show this application.
 
 Source, locked dependencies, migrations, example configuration, regression tests, CI smoke checks and curated screenshots are included. Secrets, databases, installed dependencies, historical test experiments, recordings, reports and planning notes are gitignored.
+
+## Author
+
+Rupinder Kaur
