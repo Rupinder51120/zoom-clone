@@ -217,10 +217,10 @@ Validation on **9 October 2026**:
 | Frontend production build / TypeScript / Prettier | Passed |
 | Backend Ruff lint / formatting | Passed |
 | Disposable SQLite migrations, seed, health and authorization smoke check | Passed |
-| Physical-device checks | Owner confirmed all implemented features; Mac/Android calls on the same Wi-Fi and different networks |
+| Physical-device checks | Owner confirmed the earlier feature set on Mac/Android, on the same Wi-Fi and different networks; new collaboration additions await physical retesting |
 | Responsive and appearance checks | Light/dark at 390, 768 and 1440 px; keyboard focus and reduced motion |
 
-Browser coverage includes create/join/schedule persistence, invitations, optional auth, host mute/removal/end and preview controls.
+Browser coverage includes create/join/schedule persistence, invitations, optional auth, host mute/removal/end, waiting-room admission, bidirectional chat, reactions, raised hands, synthetic screen-track delivery/stop and preview controls.
 
 ```bash
 # From frontend/
@@ -259,7 +259,7 @@ GitHub Actions runs frontend checks and backend smoke verification. Optional Act
 - STUN/TURN is configurable; TURN-only connectivity and participant capacity have not been independently verified.
 - One API process is intentional. Restarting loses active room state; persisted meeting metadata remains.
 - Zoom-style typography uses native system fonts. Exact proprietary font assets and animation timing are not claimed.
-- Out-of-scope products remain explicit placeholders. No recording, AI, screen-sharing or billing support is claimed.
+- Out-of-scope products remain explicit placeholders. No recording, AI or billing support is claimed. Screen capture requires a supported browser; unsupported browsers can still receive shared screens.
 
 ## Submission deliverables
 
