@@ -58,11 +58,21 @@ test-results*/
 .vercel/
 .railway/
 
-# Private notes and text artifacts; retain submission docs and dependency manifests
-*.md
-*.txt
-!/README.md
-!/DEPLOYMENT.md
-!/corefeatures.md
-!/backend/requirements.txt
-!/backend/requirements.lock.txt
+# Local notes and scratch exports; keep maintained submission documentation
+/notes/
+/plans/
+/scratch/
+/README.old.md
+*.bak
+*.tmp
+*.orig
+*.rej
+
+# Exported captures belong in docs/; assets/screenshots/ is curated README media
+/screenshots/
+/recordings/
+*.webm
+
+# Local development credentials
+*.pem
+*.key
