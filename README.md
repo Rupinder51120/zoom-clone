@@ -1,26 +1,75 @@
 # ZOOM-CLONE
 
+[![CI](https://github.com/Rupinder51120/zoom-clone/actions/workflows/ci.yml/badge.svg)](https://github.com/Rupinder51120/zoom-clone/actions/workflows/ci.yml)
+
 A full-stack meeting application inspired by the supplied Zoom UI: create meetings, share invitations, join browser audio/video calls and schedule meetings. The homepage opens the dashboard directly—no login required.
 
+- **Author:** Rupinder Kaur ([@Rupinder51120](https://github.com/Rupinder51120))
 - **Live demo:** [zoom-clone-bice-mu.vercel.app](https://zoom-clone-bice-mu.vercel.app/)
 - **Repository:** [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone)
 - **Stack:** Next.js 16 · TypeScript · Tailwind CSS 4 · FastAPI · SQLAlchemy · Alembic · SQLite · WebRTC · WebSockets
-- **Verification:** 57 included backend tests and 20 current-scope browser tests passed locally on 9 October 2026. Automated browser calls use synthetic media devices; the earlier feature set was also manually tested on physical devices by the project owner. Newly enabled collaboration features have automated coverage and need a fresh physical-device check.
+- **Tests:** 57 backend tests (pytest) and 20 browser tests (Playwright), with build, types, formatting and lint checks in CI.
 - **Checklist:** [corefeatures.md](corefeatures.md) · **Deployment guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
 
-## Try the demo
+**Try it in two minutes:** open the [live demo](https://zoom-clone-bice-mu.vercel.app/) → **New Meeting** → preview devices and **Start Meeting** → copy the invitation and join from another browser/device → try chat, reactions and host controls → **End** the call. Select **Schedule** to create a meeting and find it under **Upcoming**. No login is required.
 
-1. Open the [live app](https://zoom-clone-bice-mu.vercel.app/). The default workspace opens immediately; signup is optional.
-2. Select **New Meeting**, preview your camera/microphone, and start the call.
-3. Copy the invitation and open it on another device or in a private browser window. Enter a display name and join.
-4. As host, open **Participants** to mute all or remove a guest. **End** closes the meeting for everyone.
-5. Select **Schedule**, save a title/date/time/duration, and find the meeting under **Upcoming**.
+Allow camera/microphone access when testing media. Unrelated Zoom products open labeled preview notices.
 
-Allow camera/microphone access when testing media. Extra Zoom product controls open labeled preview notices.
+## Screenshots
+
+Actual application screenshots. Open an image to inspect the full view. Tablet and mobile layouts are grouped below.
+
+| Dashboard · Light | Join meeting | Schedule meeting |
+| --- | --- | --- |
+| ![Light dashboard](assets/screenshots/dashboard-desktop-light.png) | ![Join meeting](assets/screenshots/join-meeting-light.png) | ![Schedule meeting](assets/screenshots/schedule-meeting-light.png) |
+| **Dashboard · Dark** | **Meeting room · Light** | **Meeting room · Dark** |
+| ![Dark dashboard](assets/screenshots/dashboard-desktop-dark.png) | ![Light meeting room and host controls](assets/screenshots/meeting-room-light.png) | ![Dark meeting room and host controls](assets/screenshots/meeting-room-dark.png) |
+
+<details>
+<summary><strong>Tablet versions — light and dark UI</strong></summary>
+
+| Light UI | Dark UI |
+| --- | --- |
+| <img src="assets/screenshots/dashboard-tablet-light.png" alt="Tablet dashboard — light UI" width="440" /> | <img src="assets/screenshots/dashboard-tablet-dark.png" alt="Tablet dashboard — dark UI" width="440" /> |
+
+</details>
+
+<details>
+<summary><strong>Mobile versions — light and dark UI</strong></summary>
+
+| Light UI | Dark UI |
+| --- | --- |
+| <img src="assets/screenshots/dashboard-mobile-light.png" alt="Mobile dashboard — light UI" width="280" /> | <img src="assets/screenshots/dashboard-mobile-dark.png" alt="Mobile dashboard — dark UI" width="280" /> |
+
+</details>
+
+### For evaluators: where to find the evidence
+
+| Criterion | Where to look |
+| --- | --- |
+| Functionality | [Feature checklist](corefeatures.md); [20 browser tests](frontend/tests/regression/) and [57 backend tests](backend/tests/regression/) cover core workflows, optional authentication and host controls. [Collaboration tests](frontend/tests/regression/collaboration.spec.ts) cover admission, chat, reactions, hands and synthetic screen sharing. |
+| UI/UX | [Screenshots](#screenshots); [dashboard](frontend/src/components/dashboard.tsx), [meeting room](frontend/src/components/room.tsx) and [workspace styles](frontend/src/app/workspace.css). [Responsive tests](frontend/tests/regression/workflows.spec.ts) cover light/dark layouts at mobile, tablet and desktop widths; [accessibility tests](frontend/tests/regression/accessibility.spec.ts) check keyboard focus and reduced motion. |
+| Database design | [Schema](#database-schema): four tables with foreign keys, unique meeting codes and hashed tokens. See [models](backend/app/models.py), [Alembic migrations](backend/migrations/versions/), [seed data](backend/app/seed.py) and [migration/API smoke checks](backend/ci/verify.py). |
+| Backend / API design | [API overview](#api-overview), [FastAPI routes and room events](backend/app/main.py), [meeting service](backend/app/services/meetings.py) and [request validation](backend/app/schemas.py). [Admission regressions](backend/tests/regression/test_admission_regressions.py) and [collaboration tests](backend/tests/regression/test_collaboration.py) check authorization. |
+| Code quality | Strict [TypeScript configuration](frontend/tsconfig.json), Prettier, Ruff, production build and both regression suites run in [GitHub Actions](.github/workflows/ci.yml). |
+| Code modularity | [UI components](frontend/src/components/), [media hook](frontend/src/hooks/use-media.ts), [call hook](frontend/src/hooks/use-call.ts), [meeting service](backend/app/services/meetings.py), [auth](backend/app/auth.py) and [room registry](backend/app/rooms.py) separate responsibilities. |
+| Code understanding | [Architecture and design decisions](#tech-stack-and-architecture), [schema](#database-schema) and [assumptions](#assumptions-and-limitations) explain the proxy, host authorization, persistence and single-process room model. |
+
+---
 
 ## Contents
 
-[Setup](#running-locally) · [Screenshots](#screenshots) · [Assignment coverage](#assignment-coverage) · [Stack and architecture](#tech-stack-and-architecture) · [Schema](#database-schema) · [API](#api-overview) · [Verification](#verification) · [Deployment](#deployment) · [Limits](#assumptions-and-limitations)
+1. [Assignment coverage](#assignment-coverage)
+2. [Running locally](#running-locally)
+3. [Tech stack and architecture](#tech-stack-and-architecture)
+4. [Database schema](#database-schema)
+5. [API overview](#api-overview)
+6. [Verification](#verification)
+7. [Deployment](#deployment)
+8. [Assumptions and limitations](#assumptions-and-limitations)
+9. [Submission notes](#submission-notes)
+
+---
 
 ## Running locally
 
@@ -66,76 +115,6 @@ On Windows PowerShell, use `py -3.11 -m venv .venv`, `.\.venv\Scripts\Activate.p
 
 Example environment files provide local values. Replace the development gateway key with a shared random secret in production. TURN credentials are delivered to admitted browsers; use appropriate temporary credentials.
 
-## Screenshots
-
-Actual application screenshots. Tablet and mobile views are available in the dropdowns below. Extra toolbar products remain labeled previews.
-
-### Desktop dashboard — light UI
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-desktop-light.png" alt="Desktop dashboard — light UI" width="760" />
-</p>
-
-### Desktop dashboard — dark UI
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-desktop-dark.png" alt="Desktop dashboard — dark UI" width="760" />
-</p>
-
-<details>
-
-<summary><strong>Tablet versions — light and dark UI</strong></summary>
-
-**Light UI**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-tablet-light.png" alt="Tablet dashboard — light UI" width="560" />
-</p>
-
-**Dark UI**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-tablet-dark.png" alt="Tablet dashboard — dark UI" width="560" />
-</p>
-
-</details>
-
-<details>
-
-<summary><strong>Mobile versions — light and dark UI</strong></summary>
-
-**Light UI**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-mobile-light.png" alt="Mobile dashboard — light UI" width="320" />
-</p>
-
-**Dark UI**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-mobile-dark.png" alt="Mobile dashboard — dark UI" width="320" />
-</p>
-
-</details>
-
-### Join meeting
-
-<p align="center">
-  <img src="assets/screenshots/join-meeting-light.png" alt="Join meeting — light UI" width="760" />
-</p>
-
-### Schedule meeting
-
-<p align="center">
-  <img src="assets/screenshots/schedule-meeting-light.png" alt="Schedule meeting — light UI" width="760" />
-</p>
-
-### Meeting room and host controls
-
-<p align="center">
-  <img src="assets/screenshots/meeting-room-light.png" alt="Meeting room and host controls — light UI" width="760" />
-</p>
-
 ## Assignment coverage
 
 | Brief requirement | Implemented behavior |
@@ -155,18 +134,6 @@ Actual application screenshots. Tablet and mobile views are available in the dro
 **Additional live features:** meeting chat, reactions, raise/lower hand, desktop screen sharing, and optional host-managed waiting room. Screen capture requires browser support; mobile participants can view desktop shares.
 
 **Preview only:** rename, meeting lock, advanced permissions, profile preferences, calendar integrations/export, AI, recording, breakout rooms and upgrades. These controls do not perform their advertised actions.
-
-## For evaluators: where to find the evidence
-
-| Criterion | Where to look |
-| --- | --- |
-| Functionality | [Feature checklist](corefeatures.md); [20 browser tests](frontend/tests/regression/) and [57 backend tests](backend/tests/regression/) cover core workflows, optional authentication and host controls. [Collaboration tests](frontend/tests/regression/collaboration.spec.ts) cover admission, chat, reactions, hands and synthetic screen sharing. |
-| UI/UX | [Screenshots](#screenshots); [dashboard](frontend/src/components/dashboard.tsx), [meeting room](frontend/src/components/room.tsx) and [workspace styles](frontend/src/app/workspace.css). [Responsive tests](frontend/tests/regression/workflows.spec.ts) cover light/dark layouts at mobile, tablet and desktop widths; [accessibility tests](frontend/tests/regression/accessibility.spec.ts) check keyboard focus and reduced motion. |
-| Database design | [Schema](#database-schema): four tables with foreign keys, unique meeting codes and hashed tokens. See [models](backend/app/models.py), [Alembic migrations](backend/migrations/versions/), [seed data](backend/app/seed.py) and [migration/API smoke checks](backend/ci/verify.py). |
-| Backend / API design | [API overview](#api-overview), [FastAPI routes and room events](backend/app/main.py), [meeting service](backend/app/services/meetings.py) and [request validation](backend/app/schemas.py). [Admission regressions](backend/tests/regression/test_admission_regressions.py) and [collaboration tests](backend/tests/regression/test_collaboration.py) check authorization. |
-| Code quality | Strict [TypeScript configuration](frontend/tsconfig.json), Prettier, Ruff, production build and both regression suites run in [GitHub Actions](.github/workflows/ci.yml). |
-| Code modularity | [UI components](frontend/src/components/), [media hook](frontend/src/hooks/use-media.ts), [call hook](frontend/src/hooks/use-call.ts), [meeting service](backend/app/services/meetings.py), [auth](backend/app/auth.py) and [room registry](backend/app/rooms.py) separate responsibilities. |
-| Code understanding | [Architecture and design decisions](#tech-stack-and-architecture), [schema](#database-schema) and [assumptions](#assumptions-and-limitations) explain the proxy, host authorization, persistence and single-process room model. |
 
 ## Tech stack and architecture
 
@@ -295,4 +262,4 @@ Source, locked dependencies, migrations, example configuration, regression tests
 
 ## Author
 
-Rupinder Kaur
+Built by **Rupinder Kaur** ([@Rupinder51120](https://github.com/Rupinder51120)) for the SDE Fullstack assignment.
