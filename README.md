@@ -68,113 +68,73 @@ Example environment files provide local values. Replace the development gateway 
 
 ## Screenshots
 
-Actual application screenshots. Expand a theme to view its desktop, tablet, mobile and meeting workflows. Extra toolbar products remain labeled previews.
+Actual application screenshots. Tablet and mobile views are available in the dropdowns below. Extra toolbar products remain labeled previews.
 
-<details>
-<summary><strong>Light UI</strong></summary>
-
-**Desktop dashboard**
+### Desktop dashboard — light UI
 
 <p align="center">
   <img src="assets/screenshots/dashboard-desktop-light.png" alt="Desktop dashboard — light UI" width="760" />
 </p>
 
----
-
-**Tablet dashboard**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-tablet-light.png" alt="Tablet dashboard — light UI" width="560" />
-</p>
-
----
-
-**Mobile dashboard**
-
-<p align="center">
-  <img src="assets/screenshots/dashboard-mobile-light.png" alt="Mobile dashboard — light UI" width="320" />
-</p>
-
----
-
-**Join meeting**
-
-<p align="center">
-  <img src="assets/screenshots/join-meeting-light.png" alt="Join meeting — light UI" width="760" />
-</p>
-
----
-
-**Schedule meeting**
-
-<p align="center">
-  <img src="assets/screenshots/schedule-meeting-light.png" alt="Schedule meeting — light UI" width="760" />
-</p>
-
----
-
-**Meeting room and host controls**
-
-<p align="center">
-  <img src="assets/screenshots/meeting-room-light.png" alt="Meeting room and host controls — light UI" width="760" />
-</p>
-
----
-
-</details>
-
-<details>
-<summary><strong>Dark UI</strong></summary>
-
-**Desktop dashboard**
+### Desktop dashboard — dark UI
 
 <p align="center">
   <img src="assets/screenshots/dashboard-desktop-dark.png" alt="Desktop dashboard — dark UI" width="760" />
 </p>
 
----
+<details>
 
-**Tablet dashboard**
+<summary><strong>Tablet versions — light and dark UI</strong></summary>
+
+**Light UI**
+
+<p align="center">
+  <img src="assets/screenshots/dashboard-tablet-light.png" alt="Tablet dashboard — light UI" width="560" />
+</p>
+
+**Dark UI**
 
 <p align="center">
   <img src="assets/screenshots/dashboard-tablet-dark.png" alt="Tablet dashboard — dark UI" width="560" />
 </p>
 
----
+</details>
 
-**Mobile dashboard**
+<details>
+
+<summary><strong>Mobile versions — light and dark UI</strong></summary>
+
+**Light UI**
+
+<p align="center">
+  <img src="assets/screenshots/dashboard-mobile-light.png" alt="Mobile dashboard — light UI" width="320" />
+</p>
+
+**Dark UI**
 
 <p align="center">
   <img src="assets/screenshots/dashboard-mobile-dark.png" alt="Mobile dashboard — dark UI" width="320" />
 </p>
 
----
-
-**Join meeting**
-
-<p align="center">
-  <img src="assets/screenshots/join-meeting-dark.png" alt="Join meeting — dark UI" width="760" />
-</p>
-
----
-
-**Schedule meeting**
-
-<p align="center">
-  <img src="assets/screenshots/schedule-meeting-dark.png" alt="Schedule meeting — dark UI" width="760" />
-</p>
-
----
-
-**Meeting room and host controls**
-
-<p align="center">
-  <img src="assets/screenshots/meeting-room-dark.png" alt="Meeting room and host controls — dark UI" width="760" />
-</p>
-
----
-
 </details>
+
+### Join meeting
+
+<p align="center">
+  <img src="assets/screenshots/join-meeting-light.png" alt="Join meeting — light UI" width="760" />
+</p>
+
+### Schedule meeting
+
+<p align="center">
+  <img src="assets/screenshots/schedule-meeting-light.png" alt="Schedule meeting — light UI" width="760" />
+</p>
+
+### Meeting room and host controls
+
+<p align="center">
+  <img src="assets/screenshots/meeting-room-light.png" alt="Meeting room and host controls — light UI" width="760" />
+</p>
 
 ## Assignment coverage
 
