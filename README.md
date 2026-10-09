@@ -2,28 +2,38 @@
 
 [![CI](https://github.com/Rupinder51120/zoom-clone/actions/workflows/ci.yml/badge.svg)](https://github.com/Rupinder51120/zoom-clone/actions/workflows/ci.yml)
 
-A full-stack meeting application inspired by the supplied Zoom UI: create meetings, share invitations, join browser audio/video calls and schedule meetings. The homepage opens the dashboard directly—no login required.
+ZOOM-CLONE is Rupinder Kaur's video conferencing assignment. It opens directly into a meeting dashboard, where visitors can start a call, join through an invitation, or arrange a meeting for later. The interface follows the supplied Zoom references and adapts to the device's light or dark appearance.
 
-- **Author:** Rupinder Kaur ([@Rupinder51120](https://github.com/Rupinder51120))
-- **Live demo:** [zoom-clone-bice-mu.vercel.app](https://zoom-clone-bice-mu.vercel.app/)
-- **Repository:** [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone)
-- **Stack:** Next.js 16 · TypeScript · Tailwind CSS 4 · FastAPI · SQLAlchemy · Alembic · SQLite · WebRTC · WebSockets
-- **Tests:** 57 backend tests (pytest) and 20 browser tests (Playwright), with build, types, formatting and lint checks in CI.
-- **Checklist:** [corefeatures.md](corefeatures.md) · **Deployment guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
+**[Open the workspace](https://zoom-clone-bice-mu.vercel.app/)** · **[Browse the source](https://github.com/Rupinder51120/zoom-clone)** · **[Feature status](corefeatures.md)** · **[Hosting instructions](DEPLOYMENT.md)**
 
-**Try it in two minutes:** open the [live demo](https://zoom-clone-bice-mu.vercel.app/) → **New Meeting** → preview devices and **Start Meeting** → copy the invitation and join from another browser/device → try chat, reactions and host controls → **End** the call. Select **Schedule** to create a meeting and find it under **Upcoming**. No login is required.
+The implementation uses Next.js and TypeScript for the browser interface, FastAPI for the API, and SQLite with SQLAlchemy/Alembic for stored records. WebSockets coordinate rooms; WebRTC delivers audio, video and shared-screen tracks. The regression suites contain **57 backend tests and 20 browser tests**.
 
-Allow camera/microphone access when testing media. Unrelated Zoom products open labeled preview notices.
+## Walk through a meeting
+
+1. Choose **New Meeting** on the dashboard. Enter a name and review the camera and microphone settings before starting.
+2. Use **Invite** to copy the meeting link. Open it in another browser or device and join as a guest.
+3. Exchange a chat message or raise a hand. The host can mute everyone, remove a participant, or enable a waiting room for new arrivals.
+4. End the call, then use **Schedule** to save a future meeting. Its details appear in **Upcoming**, while completed calls appear in **Recent**.
+
+An account is optional. Browser permission is needed to use the camera or microphone; joining with both off is supported. Controls for unrelated Zoom products explain that they are previews.
 
 ## Screenshots
 
 Actual application screenshots. Open an image to inspect the full view. Tablet and mobile layouts are grouped below.
 
-| Dashboard · Light | Join meeting | Schedule meeting |
-| --- | --- | --- |
-| ![Light dashboard](assets/screenshots/dashboard-desktop-light.png) | ![Join meeting](assets/screenshots/join-meeting-light.png) | ![Schedule meeting](assets/screenshots/schedule-meeting-light.png) |
-| **Dashboard · Dark** | **Meeting room · Light** | **Meeting room · Dark** |
-| ![Dark dashboard](assets/screenshots/dashboard-desktop-dark.png) | ![Light meeting room and host controls](assets/screenshots/meeting-room-light.png) | ![Dark meeting room and host controls](assets/screenshots/meeting-room-dark.png) |
+### From dashboard to call
+
+| Workspace in light mode | Workspace in dark mode |
+| --- | --- |
+| ![Light dashboard](assets/screenshots/dashboard-desktop-light.png) | ![Dark dashboard](assets/screenshots/dashboard-desktop-dark.png) |
+
+| Join with a display name | Arrange a future meeting |
+| --- | --- |
+| ![Join meeting](assets/screenshots/join-meeting-light.png) | ![Schedule meeting](assets/screenshots/schedule-meeting-light.png) |
+
+| Meeting controls in light mode | Meeting controls in dark mode |
+| --- | --- |
+| ![Light meeting room and host controls](assets/screenshots/meeting-room-light.png) | ![Dark meeting room and host controls](assets/screenshots/meeting-room-dark.png) |
 
 <details>
 <summary><strong>Tablet versions — light and dark UI</strong></summary>
@@ -43,9 +53,9 @@ Actual application screenshots. Open an image to inspect the full view. Tablet a
 
 </details>
 
-### For evaluators: where to find the evidence
+## Reviewing this implementation
 
-| Criterion | Where to look |
+| Review area | Relevant implementation and checks |
 | --- | --- |
 | Functionality | [Feature checklist](corefeatures.md); [20 browser tests](frontend/tests/regression/) and [57 backend tests](backend/tests/regression/) cover core workflows, optional authentication and host controls. [Collaboration tests](frontend/tests/regression/collaboration.spec.ts) cover admission, chat, reactions, hands and synthetic screen sharing. |
 | UI/UX | [Screenshots](#screenshots); [dashboard](frontend/src/components/dashboard.tsx), [meeting room](frontend/src/components/room.tsx) and [workspace styles](frontend/src/app/workspace.css). [Responsive tests](frontend/tests/regression/workflows.spec.ts) cover light/dark layouts at mobile, tablet and desktop widths; [accessibility tests](frontend/tests/regression/accessibility.spec.ts) check keyboard focus and reduced motion. |
@@ -57,19 +67,7 @@ Actual application screenshots. Open an image to inspect the full view. Tablet a
 
 ---
 
-## Contents
-
-1. [Assignment coverage](#assignment-coverage)
-2. [Running locally](#running-locally)
-3. [Tech stack and architecture](#tech-stack-and-architecture)
-4. [Database schema](#database-schema)
-5. [API overview](#api-overview)
-6. [Verification](#verification)
-7. [Deployment](#deployment)
-8. [Assumptions and limitations](#assumptions-and-limitations)
-9. [Submission notes](#submission-notes)
-
----
+**Documentation shortcuts:** [Local setup](#running-locally) · [Implemented scope](#assignment-coverage) · [Architecture](#tech-stack-and-architecture) · [Stored data](#database-schema) · [API routes](#api-overview) · [Checks](#verification) · [Hosting](#deployment) · [Demo boundaries](#assumptions-and-limitations)
 
 ## Running locally
 
@@ -262,4 +260,6 @@ Source, locked dependencies, migrations, example configuration, regression tests
 
 ## Author
 
-Built by **Rupinder Kaur** ([@Rupinder51120](https://github.com/Rupinder51120)) for the SDE Fullstack assignment.
+**Rupinder Kaur** · [GitHub: Rupinder51120](https://github.com/Rupinder51120)
+
+Developed for the video conferencing SDE Fullstack assignment.
