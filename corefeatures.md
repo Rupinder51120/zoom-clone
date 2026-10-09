@@ -27,10 +27,10 @@ Dashboard entry: `/` (also available at `/dashboard`). No marketing or login gat
 
 ## Evidence and deliverables
 
-- Owner confirmed real Mac/Android calls on the same Wi-Fi and different networks, plus host control operation before this scope reduction.
+- Owner confirmed manual physical-device testing of all implemented features, including Mac/Android calls on the same Wi-Fi and different networks and host controls.
 - Database seeded with a demo user and sample upcoming/completed meetings; SQLAlchemy relationships and Alembic migrations retained.
 - README includes setup, stack, schema, deployment and assumptions.
 - Vercel frontend and Railway backend deployed; dashboard homepage and typography/motion update deployed in commit `9643dc3`.
 - No tested participant limit or universal network/browser compatibility is claimed.
 
-Latest scope validation: 62 backend tests and 16 production-browser tests passed, including core flow, optional auth, previews and light/dark layouts at 390, 768 and 1440 px. Frontend build/type/format and backend Ruff checks passed.
+Latest scope validation: 56 included backend tests and 16 production-browser tests passed, including core flow, optional auth, previews and light/dark layouts at 390, 768 and 1440 px. Frontend build/type/format and backend Ruff checks passed.

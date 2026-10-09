@@ -8,13 +8,13 @@
 - Backend: locked dependencies, Ruff, Alembic on a temporary SQLite database and core API verification (Python 3.11).
 - Production: after both checks succeed, calls `deploy.yml` on `main` when enabled. Railway deploys first and waits for deployment; Vercel then pulls production settings, builds and deploys prebuilt output.
 
-Comprehensive test sources, browser configurations and generated results remain gitignored. CI runs the included `backend/ci/verify.py` smoke verification, not the full local suites or browser/device tests. The script creates and removes its own temporary database.
+Curated backend and browser suites are included under each service’s `tests/regression/`. CI runs these suites and `backend/ci/verify.py` migration/API smoke verification against disposable databases. Historical experiments and generated reports remain gitignored. Browser checks use synthetic devices.
 
 ## Current deployed services
 
 - Frontend: https://zoom-clone-bice-mu.vercel.app
 - Backend: https://zoom-clone-production-8be6.up.railway.app
-- Verified on 9 October 2026: public health 200 OK, seeded dashboard data, instant creation, host WebSocket admission and end-for-everyone (media disabled). Physical-device and TURN verification remain pending.
+- Verified on 9 October 2026: public health 200 OK, seeded dashboard data, instant creation, host WebSocket admission and end-for-everyone (media disabled). The project owner confirmed physical-device testing of all implemented features, including Mac/Android calls on the same Wi-Fi and different networks. TURN-only relay operation has not been independently verified.
 - The current GitHub-imported Railway service uses `/backend` as Root Directory and `Dockerfile` as its build path, with one replica and a `/data` volume. Vercel uses `frontend`.
 - The CLI archive workflow below expects an empty Railway Root Directory. Do not enable that workflow against the current `/backend` service without first reconciling the upload root. Production Actions credentials/automation have not been verified.
 
