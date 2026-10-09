@@ -141,6 +141,11 @@ export default function Room({
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [sharingBusy, setSharingBusy] = useState(false);
+  const chatEnd = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [screen, setScreen] = useState<MediaStream | null>(null);
   const screenRef = useRef<MediaStream | null>(null);
@@ -207,6 +212,67 @@ export default function Room({
       screenRef.current?.getTracks().forEach((t) => t.stop());
     }
   }, [call.finished, media.stream]);
+  const captureAllowed = useRef(false);
+  captureAllowed.current =
+    call.status === "Connected" && !call.finished && allowed("share");
+  useEffect(
+    () => () => {
+      captureAllowed.current = false;
+    },
+    [],
+  );
+  useEffect(() => {
+    chatEnd.current?.scrollIntoView({ block: "nearest" });
+  }, [call.chat, chatOpen]);
+  function stopSharing() {
+    const capture = screenRef.current;
+    screenRef.current = null;
+    setScreen(null);
+    capture?.getTracks().forEach((track) => track.stop());
+  }
+  async function toggleSharing() {
+    if (screenRef.current) {
+      stopSharing();
+      return;
+    }
+    if (!allowed("share") || call.status !== "Connected") return;
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      call.setNotice(
+        "This browser cannot capture your screen. Share from a supported desktop browser; you can still view shared screens on your phone.",
+      );
+      return;
+    }
+    setSharingBusy(true);
+    try {
+      const capture = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+      if (!captureAllowed.current) {
+        capture.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      screenRef.current = capture;
+      setScreen(capture);
+      capture
+        .getVideoTracks()[0]
+        .addEventListener("ended", stopSharing, { once: true });
+    } catch (error) {
+      if ((error as DOMException).name !== "NotAllowedError")
+        call.setNotice(
+          "Screen sharing could not start. Try a supported desktop browser.",
+        );
+    } finally {
+      setSharingBusy(false);
+    }
+  }
+  function sendChat(event: React.FormEvent) {
+    event.preventDefault();
+    if (!draft.trim() || !allowed("chat") || call.status !== "Connected")
+      return;
+    call.send({ type: "chat", text: draft.trim() });
+    setDraft("");
+  }
   function join(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !meeting || loadError) return;
@@ -395,8 +461,9 @@ export default function Room({
               </button>
             )}
             <p className="form-hint">
-              Your microphone and camera settings above will be used when you
-              join.
+              {screenOnly
+                ? "Start the meeting, then select Share Screen to choose a screen or window."
+                : "Your microphone and camera settings above will be used when you join."}
             </p>
             <Link className="back-link" href="/join" style={{ marginTop: 22 }}>
               <ArrowLeft size={14} />
@@ -538,6 +605,63 @@ export default function Room({
             </div>
           </aside>
         )}
+        {chatOpen && (
+          <aside
+            className="participants-panel chat-panel"
+            aria-label="Meeting Chat"
+          >
+            <div className="participants-heading">
+              <h2>Meeting Chat</h2>
+              <button
+                aria-label="Close chat"
+                onClick={() => setChatOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="chat-hint">
+              To everyone · Available while this room is live
+            </p>
+            <div className="chat-messages" aria-live="polite">
+              {call.chat.map((entry) => (
+                <div className="chat-message" key={entry.id}>
+                  <div>
+                    <strong>{entry.display_name}</strong>
+                    <time>
+                      {new Date(entry.sent_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </div>
+                  <p>{entry.text}</p>
+                </div>
+              ))}
+              <div ref={chatEnd} />
+            </div>
+            <form className="chat-compose" onSubmit={sendChat}>
+              <label htmlFor="chat-message">Message everyone</label>
+              <textarea
+                id="chat-message"
+                placeholder="Type a message…"
+                maxLength={2000}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                disabled={!allowed("chat") || call.status !== "Connected"}
+              />
+              <button
+                className="primary"
+                disabled={
+                  !draft.trim() ||
+                  !allowed("chat") ||
+                  call.status !== "Connected"
+                }
+              >
+                Send
+              </button>
+            </form>
+          </aside>
+        )}
       </div>
       <footer className="room-toolbar">
         <button
@@ -563,29 +687,69 @@ export default function Room({
           className={`toolbar-control ${participantsOpen ? "selected" : ""}`}
           onClick={() => {
             setParticipantsOpen(!participantsOpen);
+            setChatOpen(false);
           }}
         >
           <Users size={24} />
           <span>Participants ({allPeers.length})</span>
         </button>
-        {[
-          ["Share Screen", MonitorUp],
-          ["Chat", MessageSquare],
-          ["Raise Hand", Hand],
-          ["Reactions", Smile],
-        ].map(([label, Icon]) => {
-          const ControlIcon = Icon as typeof MonitorUp;
-          return (
-            <PlaceholderControl
-              key={label as string}
-              label={label as string}
-              className="toolbar-control"
-            >
-              <ControlIcon size={24} />
-              <span>{label as string}</span>
-            </PlaceholderControl>
-          );
-        })}
+        <button
+          className={`toolbar-control ${screen ? "selected" : ""}`}
+          onClick={() => void toggleSharing()}
+          disabled={
+            sharingBusy ||
+            call.status !== "Connected" ||
+            (!screen && !allowed("share"))
+          }
+        >
+          <MonitorUp size={24} />
+          <span>{screen ? "Stop Sharing" : "Share Screen"}</span>
+        </button>
+        <button
+          className={`toolbar-control ${chatOpen ? "selected" : ""}`}
+          onClick={() => {
+            setChatOpen(!chatOpen);
+            setParticipantsOpen(false);
+          }}
+        >
+          <MessageSquare size={24} />
+          <span>Chat</span>
+        </button>
+        <button
+          className={`toolbar-control ${call.handRaised ? "selected" : ""}`}
+          disabled={call.status !== "Connected"}
+          onClick={() => call.send({ type: "hand", raised: !call.handRaised })}
+        >
+          <Hand size={24} />
+          <span>{call.handRaised ? "Lower Hand" : "Raise Hand"}</span>
+        </button>
+        <div className="reactions-control">
+          <button
+            className="toolbar-control"
+            aria-expanded={reactionsOpen}
+            disabled={call.status !== "Connected"}
+            onClick={() => setReactionsOpen(!reactionsOpen)}
+          >
+            <Smile size={24} />
+            <span>Reactions</span>
+          </button>
+          {reactionsOpen && (
+            <div className="reaction-picker" aria-label="Choose reaction">
+              {["👍", "👏", "❤️", "😂", "🎉", "😮"].map((emoji) => (
+                <button
+                  key={emoji}
+                  aria-label={`React ${emoji}`}
+                  onClick={() => {
+                    call.send({ type: "reaction", emoji });
+                    setReactionsOpen(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button className="toolbar-control invite-control" onClick={copy}>
           {copied ? <Check size={23} /> : <Copy size={23} />}
           <span>{copied ? "Copied" : "Invite"}</span>

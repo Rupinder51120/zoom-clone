@@ -252,12 +252,16 @@ export default function Dashboard({
               </span>
               <strong>Schedule</strong>
             </Link>
-            <PlaceholderControl label="Share Screen" className="action-card">
+            <button
+              className="action-card"
+              onClick={() => create(true)}
+              disabled={busy}
+            >
               <span className="action-icon">
                 <MonitorUp size={30} />
               </span>
               <strong>Share Screen</strong>
-            </PlaceholderControl>
+            </button>
             <PlaceholderControl label="My Notes" className="action-card">
               <span className="action-icon">
                 <Sparkles size={30} />

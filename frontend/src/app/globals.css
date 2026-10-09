@@ -1924,3 +1924,23 @@ textarea {
     font-size: 10px;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  .chat-panel {
+    color: #eee;
+  }
+  .chat-compose {
+    border-color: #444;
+  }
+  .chat-compose textarea {
+    background: #222324;
+    color: #eee;
+    border-color: #666;
+  }
+  .reaction-picker {
+    background: #222324;
+  }
+  .reaction-picker button:hover {
+    background: #38393b;
+  }
+}

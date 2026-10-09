@@ -3,8 +3,10 @@ import { ChevronRight, X } from "lucide-react";
 import { RoomPolicy } from "@/lib/room-policy";
 import { PlaceholderControl } from "./placeholder-control";
 
-/** Only the assignment's mute-all/removal bonus is interactive. */
+/** Meeting policy changes are authorized by the server. */
 export function HostTools({
+  policy,
+  onChange,
   onClose,
   onManage,
   onMute,
@@ -30,10 +32,17 @@ export function HostTools({
         <button className="host-toggle-row" onClick={onManage}>
           Manage participants <ChevronRight size={20} />
         </button>
+        <button
+          className="host-toggle-row"
+          role="switch"
+          aria-checked={policy.waiting_room}
+          onClick={() => onChange({ waiting_room: !policy.waiting_room })}
+        >
+          Waiting room <span>{policy.waiting_room ? "On" : "Off"}</span>
+        </button>
         <hr />
         <p className="host-section-label">Additional controls · Preview only</p>
         {[
-          "Waiting room",
           "Lock meeting",
           "Advanced",
           "Participant permissions",
