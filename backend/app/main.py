@@ -1,6 +1,7 @@
 import secrets
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from datetime import datetime, timezone
 from time import monotonic
 from typing import Annotated
@@ -222,6 +223,16 @@ async def meeting_socket(socket: WebSocket, code: str):
                 ):
                     await socket.close(code=4403)
                     return
+                policy = registry.policy(code)
+                if policy.locked and participant.role != "host":
+                    await socket.send_json(
+                        {
+                            "type": "error",
+                            "message": "The host has locked this meeting.",
+                        }
+                    )
+                    await socket.close(code=4403)
+                    return
                 participant_id = participant.id
                 room = registry.rooms.setdefault(code, {})
                 if participant_id in room or (
@@ -244,20 +255,32 @@ async def meeting_socket(socket: WebSocket, code: str):
                     "sharing": False,
                     "hand_raised": False,
                 }
-                await socket.send_json(
-                    {
-                        "type": "welcome",
-                        "peers": registry.peers(code),
-                        "chat": registry.chat.get(code, []),
-                    }
-                )
-                room[participant_id] = Connection(socket, peer)
+                waiting = policy.waiting_room and participant.role != "host"
+                if waiting:
+                    await socket.send_json(
+                        {"type": "waiting", "policy": asdict(policy)}
+                    )
+                else:
+                    await socket.send_json(
+                        {
+                            "type": "welcome",
+                            "policy": asdict(policy),
+                            "peers": registry.peers(code),
+                            "chat": registry.chat.get(code, []),
+                        }
+                    )
+                room[participant_id] = Connection(socket, peer, waiting=waiting)
                 registered = True
-                await registry.broadcast(
-                    code,
-                    {"type": "participant_joined", "participant": peer},
-                    exclude=participant_id,
-                )
+                if not waiting:
+                    await registry.broadcast(
+                        code,
+                        {"type": "participant_joined", "participant": peer},
+                        exclude=participant_id,
+                    )
+                if waiting or (
+                    participant.role == "host" and any(c.waiting for c in room.values())
+                ):
+                    await registry.waiting_list(code)
         while True:
             message = await socket.receive_json()
             if not isinstance(message, dict):
@@ -270,9 +293,106 @@ async def meeting_socket(socket: WebSocket, code: str):
                 connection = registry.rooms.get(code, {}).get(participant_id)
                 if not connection:
                     break
-                if kind in ("offer", "answer", "ice"):
+                policy = registry.policy(code)
+                is_host = connection.participant["role"] == "host"
+                if connection.waiting:
+                    continue  # No signaling, chat, or room events before host admission.
+                if kind in ("policy", "admit"):
+                    if not is_host:
+                        await socket.send_json(
+                            {
+                                "type": "error",
+                                "message": "Only the host can perform this action",
+                            }
+                        )
+                        continue
+                    if kind == "admit":
+                        target = registry.rooms[code].get(message.get("target"))
+                        if target and target.waiting:
+                            await target.socket.send_json(
+                                {
+                                    "type": "welcome",
+                                    "policy": asdict(policy),
+                                    "peers": registry.peers(code),
+                                    "chat": registry.chat.get(code, []),
+                                }
+                            )
+                            target.waiting = False
+                            await registry.broadcast(
+                                code,
+                                {
+                                    "type": "participant_joined",
+                                    "participant": target.participant,
+                                },
+                                exclude=target.participant["id"],
+                            )
+                            await registry.waiting_list(code)
+                        continue
+                    patch = message.get("patch")
+                    if (
+                        not isinstance(patch, dict)
+                        or not patch
+                        or any(
+                            k not in asdict(policy) or not isinstance(v, bool)
+                            for k, v in patch.items()
+                        )
+                    ):
+                        await socket.send_json(
+                            {"type": "error", "message": "Invalid meeting permissions."}
+                        )
+                        continue
+                    for key, value in patch.items():
+                        setattr(policy, key, value)
+                    for c in registry.rooms[code].values():
+                        if c.participant["role"] != "host":
+                            for key, permission in (
+                                ("audio", "unmute"),
+                                ("video", "video"),
+                                ("sharing", "share"),
+                            ):
+                                if not getattr(policy, permission):
+                                    c.participant[key] = False
+                    await registry.broadcast(
+                        code, {"type": "policy", "policy": asdict(policy)}
+                    )
+                    for c in registry.rooms[code].values():
+                        if not c.waiting:
+                            await registry.broadcast(
+                                code,
+                                {
+                                    "type": "participant_updated",
+                                    "participant": c.participant,
+                                },
+                            )
+                elif kind == "rename":
+                    text = message.get("name")
+                    if not is_host and not policy.rename:
+                        await socket.send_json(
+                            {"type": "error", "message": "The host disabled renaming."}
+                        )
+                        continue
+                    if not isinstance(text, str) or not 1 <= len(text.strip()) <= 80:
+                        await socket.send_json(
+                            {
+                                "type": "error",
+                                "message": "Name must contain 1–80 characters.",
+                            }
+                        )
+                        continue
+                    connection.participant["display_name"] = text.strip()
+                    with SessionLocal() as db:
+                        db.get(Participant, participant_id).display_name = text.strip()
+                        db.commit()
+                    await registry.broadcast(
+                        code,
+                        {
+                            "type": "participant_updated",
+                            "participant": connection.participant,
+                        },
+                    )
+                elif kind in ("offer", "answer", "ice"):
                     target = registry.rooms[code].get(message.get("target"))
-                    if target and target is not connection:
+                    if target and not target.waiting and target is not connection:
                         await target.socket.send_json(
                             {
                                 "type": kind,
@@ -282,7 +402,14 @@ async def meeting_socket(socket: WebSocket, code: str):
                         )
                 elif kind == "media":
                     for key in ("audio", "video", "sharing"):
-                        connection.participant[key] = bool(message.get(key, False))
+                        permission = {
+                            "audio": "unmute",
+                            "video": "video",
+                            "sharing": "share",
+                        }[key]
+                        connection.participant[key] = bool(
+                            message.get(key, False)
+                        ) and (is_host or getattr(policy, permission))
                     await registry.broadcast(
                         code,
                         {
@@ -291,6 +418,14 @@ async def meeting_socket(socket: WebSocket, code: str):
                         },
                     )
                 elif kind == "chat":
+                    if not is_host and not policy.chat:
+                        await socket.send_json(
+                            {
+                                "type": "error",
+                                "message": "The host disabled participant chat.",
+                            }
+                        )
+                        continue
                     text = message.get("text")
                     if not isinstance(text, str) or not 1 <= len(text.strip()) <= 2000:
                         await socket.send_json(
@@ -356,7 +491,7 @@ async def meeting_socket(socket: WebSocket, code: str):
                             "participant": connection.participant,
                         },
                     )
-                elif kind in ("mute_all", "remove", "end"):
+                elif kind in ("mute_all", "mute_one", "remove", "end"):
                     if connection.participant["role"] != "host":
                         await socket.send_json(
                             {
@@ -369,6 +504,10 @@ async def meeting_socket(socket: WebSocket, code: str):
                         await registry.broadcast(
                             code, {"type": "mute"}, exclude=participant_id
                         )
+                    elif kind == "mute_one":
+                        target = registry.rooms[code].get(message.get("target"))
+                        if target and target is not connection:
+                            await target.socket.send_json({"type": "mute"})
                     elif kind == "remove":
                         target_id = message.get("target")
                         target = registry.rooms[code].get(target_id)
@@ -378,6 +517,8 @@ async def meeting_socket(socket: WebSocket, code: str):
                                 db.commit()
                             await target.socket.send_json({"type": "removed"})
                             registry.rooms[code].pop(target_id)
+                            if target.waiting:
+                                await registry.waiting_list(code)
                             await target.socket.close(code=4003)
                             await registry.broadcast(
                                 code, {"type": "participant_left", "id": target_id}
@@ -397,15 +538,19 @@ async def meeting_socket(socket: WebSocket, code: str):
         if registered and participant_id:
             async with registry.lock:
                 room = registry.rooms.get(code, {})
-                was_connected = room.pop(participant_id, None) is not None
+                departed = room.pop(participant_id, None)
+                was_connected = departed is not None
                 if not room:
                     registry.rooms.pop(code, None)
                     registry.chat.pop(code, None)
+                    registry.policies.pop(code, None)
                 with SessionLocal() as db:
                     participant = db.get(Participant, participant_id)
                     if participant:
                         participant.left_at = utc_now()
                         db.commit()
+                if room and departed and departed.waiting:
+                    await registry.waiting_list(code)
                 if was_connected:
                     await registry.broadcast(
                         code, {"type": "participant_left", "id": participant_id}

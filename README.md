@@ -8,7 +8,7 @@ references, with a navigation rail, centered meeting actions, modal Join/Schedul
 - **Live demo:** [ZOOM-CLONE](https://zoom-clone-bice-mu.vercel.app)
 - **API health:** [Railway health endpoint](https://zoom-clone-production-8be6.up.railway.app/health)
 - **Stack:** Next.js 16 (TypeScript) · FastAPI (Python) · SQLite · SQLAlchemy 2 · Alembic · WebRTC · WebSockets
-- **Verification:** Latest local acceptance run on 9 October 2026: **60 backend tests and 9 production-browser tests passed**. Synthetic media devices were used; physical-device and cross-network testing remain pending.
+- **Verification:** Latest local acceptance run on 9 October 2026: **62 backend tests and 10 production-browser tests passed**. Synthetic media devices were used. The owner subsequently reported a successful Mac + Android call on the same Wi-Fi; cross-network testing remains pending.
 - **Feature checklist:** [corefeatures.md](corefeatures.md)
 
 ---
@@ -86,7 +86,7 @@ Sample data varies between captures and the live demo. Unimplemented product ent
 ### Bonus and additional functionality
 
 - **Optional authentication:** signup, signin, signout and password changes; personal accounts own their meetings. All mandatory workflows also work without login.
-- **Host controls:** backend-authorized mute-all, participant removal and end-for-everyone.
+- **Host controls:** backend-authorized mute-all/individual mute, participant removal, end-for-everyone, waiting-room admission, meeting lock and live participant permissions for unmuting, video, chat, renaming and screen sharing; an Advanced option hides participant avatars.
 - **Responsive appearance:** desktop, tablet and mobile layouts; light/dark theme follows system settings.
 - **Meeting collaboration:** live text chat, six emoji reactions and raise/lower hand indicators.
 - **Meeting navigation:** mini calendar, day navigation, Upcoming/Previous filters, refresh and iCalendar (`.ics`) export.
@@ -359,7 +359,7 @@ not credentials in logged URLs.
 
 ## Testing
 
-Latest local acceptance run: **60 pytest tests and 9 Playwright cases passed** on 9 October 2026.
+Latest local acceptance run: **62 pytest tests and 10 Playwright cases passed** on 9 October 2026.
 The browser cases ran against a production Next.js build and an isolated backend database. They cover
 mandatory workflows, optional auth, empty states, host refresh/rejoin, remote video, received audio packets,
 camera toggles, screen sharing, mute/removal/end, and six viewport/theme combinations.
@@ -466,7 +466,7 @@ also contains a Render alternative (`render.yaml`); Railway is the target of the
 
 ## Known limitations and future work
 
-- Physical-device testing and cross-network TURN verification remain pending. Hosted scheduling, optional authentication and multi-participant media still need a full deployed acceptance run.
+- The owner reported a successful Mac + Android call on the same Wi-Fi, including receiving the Mac’s shared screen on Android. Cross-network TURN verification remains pending. Hosted scheduling, optional authentication and multi-participant media still need a full deployed acceptance run.
 - STUN alone cannot ensure restrictive-network connectivity. Camera/microphone access needs HTTPS
   (localhost is allowed); screen sharing requires a user gesture and browser support.
 - Peer mesh bandwidth grows with participant count. No tested participant limit or reliability guarantee is claimed.
@@ -481,3 +481,9 @@ also contains a Render alternative (`render.yaml`); Railway is the target of the
 - No OAuth, email verification, email password recovery or MFA. No verification/recovery emails are sent.
 - Exact visual fidelity still has differences in spacing, typography and assets. Comprehensive tests remain local;
   GitHub CI runs the included smoke checks rather than the complete acceptance suite.
+
+### Browser screen sharing and host permission scope
+
+Chrome on Android and Safari on iOS do not expose supported `getDisplayMedia()` screen capture. These browsers can receive shared screens; starting a screen share requires a supported desktop browser. The app detects capture support and explains this limitation instead of presenting it as a failed call. See [MDN browser compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/MediaDevices.json).
+
+Host settings are live-room state and reset when the room closes or the API restarts. The backend authorizes policy changes, admission, locking and chat/name events; the application clients stop disallowed media tracks. Because WebRTC media travels directly between peers, this demo cannot inspect or suppress media sent by a modified client as a server-routed conferencing service could.

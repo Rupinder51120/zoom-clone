@@ -25,6 +25,8 @@ import {
   Settings,
   OctagonX,
 } from "lucide-react";
+import { HostTools } from "./host-tools";
+import { screenShareHelp } from "@/lib/room-policy";
 import { MeetingChat } from "./meeting-chat";
 import { Header } from "./navigation";
 import { api, Meeting, Profile, Peer, formatCode, copyInvite } from "@/lib/api";
@@ -70,11 +72,13 @@ function VideoTile({
   stream,
   local = false,
   reaction,
+  hideAvatar = false,
 }: {
   peer: Peer;
   stream: MediaStream | null;
   local?: boolean;
   reaction?: string;
+  hideAvatar?: boolean;
 }) {
   return (
     <div
@@ -88,7 +92,9 @@ function VideoTile({
       />
       {!peer.video && !peer.sharing && (
         <div className="tile-avatar">
-          <span className="avatar-initials">{initials(peer.display_name)}</span>
+          <span className="avatar-initials">
+            {hideAvatar ? <UserRound size={48} /> : initials(peer.display_name)}
+          </span>
         </div>
       )}
       {peer.hand_raised && (
@@ -143,6 +149,12 @@ export default function Room({
   const [copied, setCopied] = useState(false);
   const [screen, setScreen] = useState<MediaStream | null>(null);
   const screenRef = useRef<MediaStream | null>(null);
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    setCanShare(typeof navigator.mediaDevices?.getDisplayMedia === "function");
+  }, []);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
   const [sharingBusy, setSharingBusy] = useState(false);
   const media = useMedia(initialVideo, initialAudio);
   const call = useCall({
@@ -184,6 +196,26 @@ export default function Room({
     },
     [],
   );
+  const isHost = call.self?.role === "host";
+  const allowed = (key: "unmute" | "video" | "chat" | "rename" | "share") =>
+    isHost || call.policy[key];
+  useEffect(() => {
+    if (call.self?.role !== "guest") return;
+    if (!call.policy.unmute) media.mute();
+    if (!call.policy.video && media.video) void media.toggleVideo();
+    if (!call.policy.share && screenRef.current) {
+      screenRef.current.getTracks().forEach((t) => t.stop());
+      screenRef.current = null;
+      setScreen(null);
+    }
+  }, [
+    call.policy,
+    call.self?.role,
+    media.mute,
+    media.audio,
+    media.video,
+    media.toggleVideo,
+  ]);
   useEffect(() => {
     if (call.finished) {
       media.stream?.getTracks().forEach((t) => t.stop());
@@ -197,10 +229,18 @@ export default function Room({
       screenRef.current = null;
       return;
     }
+    if (!allowed("share")) {
+      call.setNotice("The host disabled participant screen sharing.");
+      return;
+    }
+    if (!canShare) {
+      call.setNotice(screenShareHelp);
+      return;
+    }
     setSharingBusy(true);
     try {
       if (!navigator.mediaDevices?.getDisplayMedia)
-        throw new Error("Screen sharing is unavailable in this browser.");
+        throw new Error(screenShareHelp);
       const next = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: false,
@@ -241,7 +281,7 @@ export default function Room({
   }
   const selfPeer: Peer = {
     id: call.self?.participant_id || "self",
-    display_name: name || "You",
+    display_name: call.selfName || name || "You",
     role: call.self?.role || "guest",
     audio: media.audio,
     video: media.video,
@@ -433,6 +473,7 @@ export default function Room({
       <div className="room-main">
         <div className={`video-grid ${call.peers.length === 0 ? "solo" : ""}`}>
           <VideoTile
+            hideAvatar={call.policy.hide_avatars}
             peer={selfPeer}
             stream={screen || media.stream}
             local
@@ -440,6 +481,7 @@ export default function Room({
           />
           {call.peers.map((p) => (
             <VideoTile
+              hideAvatar={call.policy.hide_avatars}
               key={p.id}
               peer={p}
               reaction={call.reactions[p.id]?.emoji}
@@ -450,7 +492,9 @@ export default function Room({
             <div className="waiting-message">
               {call.status === "Connected"
                 ? "You are the only participant. Invite someone to join your meeting."
-                : "Connecting to the meeting…"}
+                : call.status === "Waiting for host admission"
+                  ? "Waiting room: the host will admit you shortly."
+                  : "Connecting to the meeting…"}
             </div>
           )}
         </div>
@@ -466,6 +510,30 @@ export default function Room({
               </button>
             </div>
             <div className="participants-list">
+              {isHost && call.waitingPeers.length > 0 && (
+                <section aria-label="Waiting room participants">
+                  <h3>Waiting room ({call.waitingPeers.length})</h3>
+                  {call.waitingPeers.map((p) => (
+                    <div className="participant-item" key={p.id}>
+                      <span className="participant-name">{p.display_name}</span>
+                      <button
+                        onClick={() =>
+                          call.send({ type: "admit", target: p.id })
+                        }
+                      >
+                        Admit
+                      </button>
+                      <button
+                        onClick={() =>
+                          call.send({ type: "remove", target: p.id })
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </section>
+              )}
               {allPeers.map((p) => (
                 <div className="participant-item" key={p.id}>
                   <span className="participant-avatar">
@@ -485,6 +553,15 @@ export default function Room({
                   <div className="participant-actions">
                     {p.audio ? <Mic size={14} /> : <MicOff size={14} />}{" "}
                     {p.video ? <Video size={14} /> : <VideoOff size={14} />}{" "}
+                    {isHost && p.id !== selfPeer.id && (
+                      <button
+                        onClick={() =>
+                          call.send({ type: "mute_one", target: p.id })
+                        }
+                      >
+                        Mute
+                      </button>
+                    )}
                     {call.self?.role === "host" && p.id !== selfPeer.id && (
                       <button
                         onClick={() =>
@@ -516,17 +593,56 @@ export default function Room({
         {chatOpen && (
           <MeetingChat
             messages={call.chat}
-            connected={call.status === "Connected"}
+            connected={call.status === "Connected" && allowed("chat")}
             onSend={(text) => call.send({ type: "chat", text })}
             onClose={() => setChatOpen(false)}
           />
         )}
       </div>
+      {renameOpen && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rename yourself"
+        >
+          <form
+            className="modal"
+            onSubmit={(e) => {
+              e.preventDefault();
+              call.send({ type: "rename", name: renameValue });
+              setRenameOpen(false);
+            }}
+          >
+            <h2>Rename yourself</h2>
+            <label htmlFor="room-name">Display name</label>
+            <input
+              id="room-name"
+              value={renameValue}
+              maxLength={80}
+              onChange={(e) => setRenameValue(e.target.value)}
+            />
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setRenameOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="primary"
+              disabled={!renameValue.trim() || !allowed("rename")}
+            >
+              Save
+            </button>
+          </form>
+        </div>
+      )}
       <footer className="room-toolbar">
         <button
           className={`toolbar-control ${!media.audio ? "off" : ""}`}
           onClick={() => void media.toggleAudio()}
-          disabled={media.busy}
+          disabled={media.busy || (!media.audio && !allowed("unmute"))}
           aria-label={media.audio ? "Mute microphone" : "Unmute microphone"}
         >
           {media.audio ? <Mic size={24} /> : <MicOff size={24} />}
@@ -535,7 +651,7 @@ export default function Room({
         <button
           className={`toolbar-control ${!media.video ? "off" : ""}`}
           onClick={() => void media.toggleVideo()}
-          disabled={media.busy}
+          disabled={media.busy || (!media.video && !allowed("video"))}
           aria-label={media.video ? "Stop video" : "Start video"}
         >
           {media.video ? <Video size={24} /> : <VideoOff size={24} />}
@@ -555,10 +671,18 @@ export default function Room({
         <button
           className={`toolbar-control ${screen ? "sharing" : ""}`}
           onClick={() => void toggleShare()}
-          disabled={sharingBusy}
+          disabled={sharingBusy || (!screen && !allowed("share"))}
+          title={!canShare ? screenShareHelp : undefined}
+          aria-label={!canShare ? "Screen sharing availability" : undefined}
         >
           {sharingBusy ? <LoaderCircle size={24} /> : <MonitorUp size={24} />}
-          <span>{screen ? "Stop Share" : "Share Screen"}</span>
+          <span>
+            {screen
+              ? "Stop Share"
+              : !canShare
+                ? "Share unavailable"
+                : "Share Screen"}
+          </span>
         </button>
         <button
           className={`toolbar-control ${chatOpen ? "selected" : ""}`}
@@ -637,25 +761,17 @@ export default function Room({
               <span>Host tools</span>
             </button>
             {toolsOpen && (
-              <div className="room-popover">
-                <button
-                  onClick={() => {
-                    call.send({ type: "mute_all" });
-                    setToolsOpen(false);
-                  }}
-                >
-                  Mute all participants
-                </button>
-                <button
-                  onClick={() => {
-                    setParticipantsOpen(true);
-                    setChatOpen(false);
-                    setToolsOpen(false);
-                  }}
-                >
-                  Manage participants
-                </button>
-              </div>
+              <HostTools
+                policy={call.policy}
+                onChange={(patch) => call.send({ type: "policy", patch })}
+                onClose={() => setToolsOpen(false)}
+                onMute={() => call.send({ type: "mute_all" })}
+                onManage={() => {
+                  setParticipantsOpen(true);
+                  setChatOpen(false);
+                  setToolsOpen(false);
+                }}
+              />
             )}
           </div>
         )}
@@ -683,6 +799,16 @@ export default function Room({
               ].map((label) => (
                 <PlaceholderControl key={label} label={label} />
               ))}
+              <button
+                disabled={!allowed("rename")}
+                onClick={() => {
+                  setRenameValue(selfPeer.display_name);
+                  setRenameOpen(true);
+                  setMoreOpen(false);
+                }}
+              >
+                Rename self
+              </button>
               <button
                 onClick={() => {
                   setInfoOpen(true);

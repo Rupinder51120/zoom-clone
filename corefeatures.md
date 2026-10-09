@@ -2,7 +2,7 @@
 
 Legend: `[x]` implemented and verified within the stated scope · `[~]` partially verified or incomplete · `[ ]` pending
 
-**Verification — 9 October 2026:** 60 backend pytest tests and 9 Playwright cases passed in the latest local
+**Verification — 9 October 2026:** 62 backend pytest tests and 10 Playwright cases passed in the latest local
 acceptance run. Browser tests used a production build, disposable SQLite data and synthetic media devices.
 One browser case covers multiple features; this is not a one-test-per-checkbox claim. Comprehensive test sources/configuration and reports remain gitignored. CI runs the included smoke
 verification and formatting/type/build checks, not the full local acceptance suite.
@@ -55,14 +55,19 @@ verification and formatting/type/build checks, not the full local acceptance sui
 
 - [x] Two local browser participants receive remote video frames and audio RTP packets.
 - [x] Camera off/on changes the remote participant's video visibility.
-- [x] Host mute-all changes the guest microphone state.
+- [x] Host mute-all changes the guest microphone state; individual mute is backend-authorized and covered by integration tests.
+- [x] Waiting-room guests have no peer signaling/chat access until admitted by the host.
+- [x] Meeting lock rejects new guest socket admissions.
+- [x] Live permissions for unmuting, video, chat, renaming and sharing; guests cannot change host policy.
+- [x] Advanced hide-avatar setting, responsive host panel and light/dark appearance.
+- [x] Unsupported browser screen capture has an explanatory control/message; Android can receive a desktop share.
 - [x] Share and stop sharing a screen; sharing state appears on the guest.
 - [x] Show participants and authorize host commands on the backend.
 - [x] Remove a participant and invalidate that participant admission.
 - [x] End-for-everyone persists the ended state and closes the call.
 - [x] Ended calls do not offer a rejoin link.
 - [~] Leave/media permission/device-choice behavior: implemented with existing local coverage; full physical-device acceptance remains pending.
-- [ ] Real camera/microphone acceptance on two physical devices.
+- [x] Owner-reported Mac + Android same-Wi-Fi call with real devices; screenshots show Android receiving the Mac’s shared screen.
 - [ ] Cross-network connectivity through a configured TURN relay.
 - [ ] Tested participant capacity/load limit; no limit is claimed.
 

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { defaultPolicy, RoomPolicy } from "@/lib/room-policy";
 import { api, Peer } from "@/lib/api";
 type Admission = {
   participant_id: string;
@@ -23,6 +24,7 @@ export type ChatEntry = {
   sent_at: string;
 };
 type Message = {
+  policy?: RoomPolicy;
   chat?: ChatEntry[];
   entry?: ChatEntry;
   emoji?: string;
@@ -55,6 +57,9 @@ export function useCall({
   screen: MediaStream | null;
   onMute: () => void;
 }) {
+  const [policy, setPolicy] = useState(defaultPolicy);
+  const [waitingPeers, setWaitingPeers] = useState<Peer[]>([]);
+  const [selfName, setSelfName] = useState("");
   const [chat, setChat] = useState<ChatEntry[]>([]);
   const [handRaised, setHandRaised] = useState(false);
   const [reactions, setReactions] = useState<
@@ -185,7 +190,24 @@ export function useCall({
     async function handle(message: Message) {
       if (disposed) return;
       switch (message.type) {
+        case "policy":
+          if (message.policy) setPolicy(message.policy);
+          break;
+        case "waiting_list":
+          setWaitingPeers(message.peers || []);
+          break;
+        case "waiting":
+          if (message.policy) setPolicy(message.policy);
+          setStatus("Waiting for host admission");
+          break;
         case "welcome":
+          if (message.policy) setPolicy(message.policy);
+          send({
+            type: "media",
+            audio: local.current.audio,
+            video: local.current.video,
+            sharing: !!local.current.screen,
+          });
           setChat(message.chat || []);
           setPeers(message.peers || []);
           setStatus("Connected");
@@ -214,8 +236,13 @@ export function useCall({
             }));
           break;
         case "participant_updated":
-          if (message.participant?.id === admission.current?.participant_id)
+          if (
+            message.participant &&
+            message.participant.id === admission.current?.participant_id
+          ) {
             setHandRaised(!!message.participant?.hand_raised);
+            setSelfName(message.participant.display_name);
+          }
           if (message.participant)
             setPeers((prev) =>
               prev.map((p) =>
@@ -379,6 +406,9 @@ export function useCall({
     setFinished("You left the meeting.");
   }
   return {
+    policy,
+    waitingPeers,
+    selfName,
     chat,
     handRaised,
     reactions,
