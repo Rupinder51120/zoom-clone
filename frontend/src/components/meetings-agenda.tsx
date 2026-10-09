@@ -10,45 +10,10 @@ import {
 } from "lucide-react";
 import { api, Meeting, Profile } from "@/lib/api";
 import { MeetingList } from "./dashboard";
+import { PlaceholderControl } from "./placeholder-control";
 
 export function dayKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-export function calendarFile(meetings: Meeting[]) {
-  const escape = (text: string) =>
-    text
-      .replace(/\\/g, "\\\\")
-      .replace(/\r?\n/g, "\\n")
-      .replace(/,/g, "\\,")
-      .replace(/;/g, "\\;");
-  const stamp = (date: Date) =>
-    date
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d{3}/, "");
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//ZOOM-CLONE//Meetings//EN",
-    ...meetings
-      .filter((m) => m.scheduled_start && m.status !== "ended")
-      .flatMap((m) => {
-        const start = new Date(m.scheduled_start!);
-        return [
-          "BEGIN:VEVENT",
-          `UID:${m.code}@zoom-clone`,
-          `DTSTAMP:${stamp(new Date())}`,
-          `DTSTART:${stamp(start)}`,
-          `DTEND:${stamp(new Date(start.getTime() + m.duration_minutes * 60000))}`,
-          `SUMMARY:${escape(m.title)}`,
-          `DESCRIPTION:${escape(m.description)}`,
-          `URL:${window.location.origin}/join?meeting=${m.code}`,
-          "END:VEVENT",
-        ];
-      }),
-    "END:VCALENDAR",
-    "",
-  ].join("\r\n");
 }
 export default function MeetingsAgenda({
   searchQuery = "",
@@ -95,18 +60,6 @@ export default function MeetingsAgenda({
     setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
     setView("agenda");
   }
-  function exportCalendar() {
-    const url = URL.createObjectURL(
-      new Blob([calendarFile(meetings)], {
-        type: "text/calendar;charset=utf-8",
-      }),
-    );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "zoom-clone-meetings.ics";
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
   const dates = month
     ? Array.from(
         { length: 42 },
@@ -143,16 +96,10 @@ export default function MeetingsAgenda({
       <div className="calendar-notice">
         <CalendarDays size={22} />
         <span>
-          Your meetings are saved in this workspace. Export them to add to your
-          calendar.
+          Your meetings are saved in this workspace. Calendar integration is a
+          preview.
         </span>
-        <button
-          className="link-button"
-          onClick={exportCalendar}
-          disabled={loading}
-        >
-          Export calendar
-        </button>
+        <PlaceholderControl label="Export calendar" className="link-button" />
       </div>
       <div className="calendar-columns">
         <aside className="mini-calendar">

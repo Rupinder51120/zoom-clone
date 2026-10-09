@@ -252,16 +252,12 @@ export default function Dashboard({
               </span>
               <strong>Schedule</strong>
             </Link>
-            <button
-              className="action-card"
-              onClick={() => create(true)}
-              disabled={busy}
-            >
+            <PlaceholderControl label="Share Screen" className="action-card">
               <span className="action-icon">
                 <MonitorUp size={30} />
               </span>
               <strong>Share Screen</strong>
-            </button>
+            </PlaceholderControl>
             <PlaceholderControl label="My Notes" className="action-card">
               <span className="action-icon">
                 <Sparkles size={30} />
@@ -276,7 +272,7 @@ export default function Dashboard({
             <PlaceholderControl
               label="Connect now"
               className="text-button"
-              description="Calendar provider connection is a placeholder. You can export your meetings from the Meetings view."
+              description="Calendar connection and export are visual placeholders."
             />
           </div>
         )}

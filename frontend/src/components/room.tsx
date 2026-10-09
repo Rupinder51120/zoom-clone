@@ -26,8 +26,6 @@ import {
   OctagonX,
 } from "lucide-react";
 import { HostTools } from "./host-tools";
-import { screenShareHelp } from "@/lib/room-policy";
-import { MeetingChat } from "./meeting-chat";
 import { Header } from "./navigation";
 import { api, Meeting, Profile, Peer, formatCode, copyInvite } from "@/lib/api";
 import { useMedia } from "@/hooks/use-media";
@@ -138,24 +136,14 @@ export default function Room({
   const [hostToken, setHostToken] = useState<string | null>(null);
   const [joined, setJoined] = useState(false);
   const [participantsOpen, setParticipantsOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [reactionsOpen, setReactionsOpen] = useState(false);
-  const [seenMessages, setSeenMessages] = useState<string | undefined>();
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [screen, setScreen] = useState<MediaStream | null>(null);
   const screenRef = useRef<MediaStream | null>(null);
-  const [canShare, setCanShare] = useState(false);
-  useEffect(() => {
-    setCanShare(typeof navigator.mediaDevices?.getDisplayMedia === "function");
-  }, []);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
-  const [sharingBusy, setSharingBusy] = useState(false);
   const media = useMedia(initialVideo, initialAudio);
   const call = useCall({
     code,
@@ -168,9 +156,6 @@ export default function Room({
     screen,
     onMute: media.mute,
   });
-  useEffect(() => {
-    if (chatOpen) setSeenMessages(call.chat.at(-1)?.id);
-  }, [chatOpen, call.chat]);
   useEffect(() => {
     api<Meeting>(`/api/meetings/${code}`)
       .then((m) => {
@@ -222,49 +207,12 @@ export default function Room({
       screenRef.current?.getTracks().forEach((t) => t.stop());
     }
   }, [call.finished, media.stream]);
-  async function toggleShare() {
-    if (screen) {
-      screen.getTracks().forEach((t) => t.stop());
-      setScreen(null);
-      screenRef.current = null;
-      return;
-    }
-    if (!allowed("share")) {
-      call.setNotice("The host disabled participant screen sharing.");
-      return;
-    }
-    if (!canShare) {
-      call.setNotice(screenShareHelp);
-      return;
-    }
-    setSharingBusy(true);
-    try {
-      if (!navigator.mediaDevices?.getDisplayMedia)
-        throw new Error(screenShareHelp);
-      const next = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false,
-      });
-      next.getVideoTracks()[0].onended = () => {
-        setScreen(null);
-        screenRef.current = null;
-      };
-      screenRef.current = next;
-      setScreen(next);
-    } catch (e) {
-      if ((e as Error).name !== "NotAllowedError")
-        call.setNotice((e as Error).message);
-    } finally {
-      setSharingBusy(false);
-    }
-  }
   function join(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !meeting || loadError) return;
     setName(name.trim());
     localStorage.setItem("guest-name", name.trim());
     setJoined(true);
-    if (screenOnly) void toggleShare();
   }
   async function copy() {
     if (!meeting) return;
@@ -553,15 +501,6 @@ export default function Room({
                   <div className="participant-actions">
                     {p.audio ? <Mic size={14} /> : <MicOff size={14} />}{" "}
                     {p.video ? <Video size={14} /> : <VideoOff size={14} />}{" "}
-                    {isHost && p.id !== selfPeer.id && (
-                      <button
-                        onClick={() =>
-                          call.send({ type: "mute_one", target: p.id })
-                        }
-                      >
-                        Mute
-                      </button>
-                    )}
                     {call.self?.role === "host" && p.id !== selfPeer.id && (
                       <button
                         onClick={() =>
@@ -590,54 +529,7 @@ export default function Room({
             </div>
           </aside>
         )}
-        {chatOpen && (
-          <MeetingChat
-            messages={call.chat}
-            connected={call.status === "Connected" && allowed("chat")}
-            onSend={(text) => call.send({ type: "chat", text })}
-            onClose={() => setChatOpen(false)}
-          />
-        )}
       </div>
-      {renameOpen && (
-        <div
-          className="modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Rename yourself"
-        >
-          <form
-            className="modal"
-            onSubmit={(e) => {
-              e.preventDefault();
-              call.send({ type: "rename", name: renameValue });
-              setRenameOpen(false);
-            }}
-          >
-            <h2>Rename yourself</h2>
-            <label htmlFor="room-name">Display name</label>
-            <input
-              id="room-name"
-              value={renameValue}
-              maxLength={80}
-              onChange={(e) => setRenameValue(e.target.value)}
-            />
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setRenameOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="primary"
-              disabled={!renameValue.trim() || !allowed("rename")}
-            >
-              Save
-            </button>
-          </form>
-        </div>
-      )}
       <footer className="room-toolbar">
         <button
           className={`toolbar-control ${!media.audio ? "off" : ""}`}
@@ -662,87 +554,29 @@ export default function Room({
           className={`toolbar-control ${participantsOpen ? "selected" : ""}`}
           onClick={() => {
             setParticipantsOpen(!participantsOpen);
-            setChatOpen(false);
           }}
         >
           <Users size={24} />
           <span>Participants ({allPeers.length})</span>
         </button>
-        <button
-          className={`toolbar-control ${screen ? "sharing" : ""}`}
-          onClick={() => void toggleShare()}
-          disabled={sharingBusy || (!screen && !allowed("share"))}
-          title={!canShare ? screenShareHelp : undefined}
-          aria-label={!canShare ? "Screen sharing availability" : undefined}
-        >
-          {sharingBusy ? <LoaderCircle size={24} /> : <MonitorUp size={24} />}
-          <span>
-            {screen
-              ? "Stop Share"
-              : !canShare
-                ? "Share unavailable"
-                : "Share Screen"}
-          </span>
-        </button>
-        <button
-          className={`toolbar-control ${chatOpen ? "selected" : ""}`}
-          onClick={() => {
-            setChatOpen(!chatOpen);
-            setParticipantsOpen(false);
-          }}
-        >
-          <MessageSquare size={24} />
-          <span>
-            Chat
-            {!chatOpen &&
-            call.chat.length > 0 &&
-            call.chat.at(-1)?.id !== seenMessages
-              ? " •"
-              : ""}
-          </span>
-        </button>
-        <button
-          className={`toolbar-control ${call.handRaised ? "selected" : ""}`}
-          disabled={call.status !== "Connected"}
-          onClick={() => call.send({ type: "hand", raised: !call.handRaised })}
-        >
-          <Hand size={24} />
-          <span>{call.handRaised ? "Lower Hand" : "Raise Hand"}</span>
-        </button>
-        <div className="reactions-control">
-          <button
-            className="toolbar-control"
-            aria-expanded={reactionsOpen}
-            onClick={() => setReactionsOpen(!reactionsOpen)}
-            disabled={call.status !== "Connected"}
-          >
-            <Smile size={24} />
-            <span>Reactions</span>
-          </button>
-          {reactionsOpen && (
-            <div className="reaction-picker" aria-label="Choose reaction">
-              {[
-                ["👍", "Thumbs up"],
-                ["👏", "Clap"],
-                ["❤️", "Heart"],
-                ["😂", "Laugh"],
-                ["🎉", "Celebrate"],
-                ["😮", "Surprised"],
-              ].map(([emoji, label]) => (
-                <button
-                  key={emoji}
-                  aria-label={label}
-                  onClick={() => {
-                    call.send({ type: "reaction", emoji });
-                    setReactionsOpen(false);
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {[
+          ["Share Screen", MonitorUp],
+          ["Chat", MessageSquare],
+          ["Raise Hand", Hand],
+          ["Reactions", Smile],
+        ].map(([label, Icon]) => {
+          const ControlIcon = Icon as typeof MonitorUp;
+          return (
+            <PlaceholderControl
+              key={label as string}
+              label={label as string}
+              className="toolbar-control"
+            >
+              <ControlIcon size={24} />
+              <span>{label as string}</span>
+            </PlaceholderControl>
+          );
+        })}
         <button className="toolbar-control invite-control" onClick={copy}>
           {copied ? <Check size={23} /> : <Copy size={23} />}
           <span>{copied ? "Copied" : "Invite"}</span>
@@ -768,7 +602,6 @@ export default function Room({
                 onMute={() => call.send({ type: "mute_all" })}
                 onManage={() => {
                   setParticipantsOpen(true);
-                  setChatOpen(false);
                   setToolsOpen(false);
                 }}
               />
@@ -799,16 +632,7 @@ export default function Room({
               ].map((label) => (
                 <PlaceholderControl key={label} label={label} />
               ))}
-              <button
-                disabled={!allowed("rename")}
-                onClick={() => {
-                  setRenameValue(selfPeer.display_name);
-                  setRenameOpen(true);
-                  setMoreOpen(false);
-                }}
-              >
-                Rename self
-              </button>
+              <PlaceholderControl label="Rename self" />
               <button
                 onClick={() => {
                   setInfoOpen(true);

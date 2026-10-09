@@ -134,9 +134,7 @@ export function Header({ portal = false }: { portal?: boolean }) {
                 <button disabled={busy} onClick={() => host(true)}>
                   With Video On
                 </button>
-                <button disabled={busy} onClick={() => host(false, true)}>
-                  Screen Share Only
-                </button>
+                <PlaceholderControl label="Screen Share Only" />
               </div>
             )}
           </div>
@@ -202,7 +200,7 @@ export function Sidebar() {
         <PlaceholderControl
           label="Chat"
           className="rail-placeholder"
-          description="Workspace chat is a preview. Live chat inside meetings is available."
+          description="Chat is a visual placeholder outside the assignment scope."
         >
           <MessageSquare size={23} />
           <span>Chat</span>

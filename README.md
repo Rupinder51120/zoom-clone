@@ -8,7 +8,7 @@ references, with a navigation rail, centered meeting actions, modal Join/Schedul
 - **Live demo:** [ZOOM-CLONE](https://zoom-clone-bice-mu.vercel.app)
 - **API health:** [Railway health endpoint](https://zoom-clone-production-8be6.up.railway.app/health)
 - **Stack:** Next.js 16 (TypeScript) · FastAPI (Python) · SQLite · SQLAlchemy 2 · Alembic · WebRTC · WebSockets
-- **Verification:** Latest local acceptance run on 9 October 2026: **62 backend tests and 10 production-browser tests passed**. Synthetic media devices were used. The owner subsequently reported a successful Mac + Android call on the same Wi-Fi; cross-network testing remains pending.
+- **Verification:** Latest local acceptance run on 9 October 2026: **62 backend tests and 10 production-browser tests passed**. Synthetic media devices were used. The owner subsequently reported a successful Mac + Android call on the same Wi-Fi; the owner also confirmed calls and host controls across different networks. This is user-reported real-device verification, not a capacity or TURN-relay claim.
 - **Feature checklist:** [corefeatures.md](corefeatures.md)
 
 ---
@@ -61,7 +61,7 @@ Navigation moves above the content, meeting actions wrap, and meeting cards stac
 
 ![ZOOM-CLONE meeting room with camera off and call controls](assets/screenshots/meeting-room-dark.png)
 
-Camera-off room showing participant initials and the audio/video, participants, screen sharing, chat, raise hand, reactions and leave controls.
+Earlier camera-off room reference. Collaboration controls are now preview-only; audio/video, participants, invitations and leave remain functional.
 
 </details>
 
@@ -80,20 +80,21 @@ Sample data varies between captures and the live demo. Unimplemented product ent
 | **Joining** | Enter a meeting ID or invitation URL, choose a display name, validate meeting existence, preview devices and choose initial audio/video settings |
 | **Scheduling** | Save a title, optional description, date/time, IANA timezone, duration and host video preference; copy the generated invitation |
 | **Meeting details** | View saved scheduling information, copy an invitation, start as the owner or join as a guest |
-| **Live calls** | Browser WebRTC audio/video, microphone/camera controls, participants, screen sharing, invitations, leave and end-for-everyone |
+| **Live calls** | Browser WebRTC audio/video, microphone/camera controls, participants, invitations, leave and end-for-everyone |
 | **Persistence** | SQLite meeting metadata and participant join/leave/removal history; scheduled meetings survive refresh and backend restart |
 
-### Bonus and additional functionality
+### Bonus and supported scope
 
-- **Optional authentication:** signup, signin, signout and password changes; personal accounts own their meetings. All mandatory workflows also work without login.
-- **Host controls:** backend-authorized mute-all/individual mute, participant removal, end-for-everyone, waiting-room admission, meeting lock and live participant permissions for unmuting, video, chat, renaming and screen sharing; an Advanced option hides participant avatars.
+- **Optional authentication:** signup, signin and signout; personal accounts own their meetings. All mandatory workflows work without login.
+- **Host controls:** backend-authorized mute-all and participant removal.
 - **Responsive appearance:** desktop, tablet and mobile layouts; light/dark theme follows system settings.
-- **Meeting collaboration:** live text chat, six emoji reactions and raise/lower hand indicators.
-- **Meeting navigation:** mini calendar, day navigation, Upcoming/Previous filters, refresh and iCalendar (`.ics`) export.
-- **Profile preferences:** save manually selected availability, a status message and work location.
+- **Public landing page:** `/welcome` follows Zoom's public navigation and meeting-focused presentation. `/` remains the default-user dashboard; no login is required.
 
-Unsupported screenshot products open a **Preview only** notice or appear as disabled options. Recording,
-AI tools, paid upgrades, connected calendars and breakout rooms are not implemented services.
+### Reference-only placeholders
+
+Screen sharing, chat, reactions, raise hand, rename, waiting room, meeting lock, advanced participant permissions, profile/settings preferences and calendar export now open **Preview only** notices. Recording, AI, paid upgrades, connected calendars and breakout rooms are also placeholders. They do not send commands or save settings from these controls.
+
+Earlier backend event handlers and schema fields remain for compatibility with existing data; they are outside the supported assignment interface. The final product scope is the four core workflows and three listed bonuses. Real audio/video, participant lists, invitations, leave and end-for-everyone support the meeting workflow.
 
 ### Seed data
 
@@ -457,16 +458,15 @@ also contains a Render alternative (`render.yaml`); Railway is the target of the
 - Signup/signin has a basic per-email, single-process throttle. It is not distributed abuse protection.
 - Planned duration does not automatically terminate a call. Host leave does not end the meeting;
   end-for-everyone does. Empty rooms can remain marked active until explicitly ended.
-- Chat keeps the latest 100 messages only while the room remains populated. Chat is plain text;
-  reactions expire after five seconds. Chat and reaction send intervals bound routine traffic.
-- Availability is manually selected; calendar export is a downloaded file, not a connected calendar account.
+- Legacy collaboration handlers remain in the backend for compatibility; the UI exposes only preview controls.
+- Profile preferences and calendar export are preview-only in the supported interface.
 - ZOOM-CLONE is an assignment implementation. Reference-inspired UI is not a claim of affiliation or exact pixel equality.
 
 ---
 
 ## Known limitations and future work
 
-- The owner reported a successful Mac + Android call on the same Wi-Fi, including receiving the Mac’s shared screen on Android. Cross-network TURN verification remains pending. Hosted scheduling, optional authentication and multi-participant media still need a full deployed acceptance run.
+- The owner reported Mac + Android calls on the same Wi-Fi and different networks, plus successful host controls. This does not verify forced TURN routing or participant capacity. The latest reduced UI scope was verified locally and needs redeployment.
 - STUN alone cannot ensure restrictive-network connectivity. Camera/microphone access needs HTTPS
   (localhost is allowed); screen sharing requires a user gesture and browser support.
 - Peer mesh bandwidth grows with participant count. No tested participant limit or reliability guarantee is claimed.
@@ -482,8 +482,6 @@ also contains a Render alternative (`render.yaml`); Railway is the target of the
 - Exact visual fidelity still has differences in spacing, typography and assets. Comprehensive tests remain local;
   GitHub CI runs the included smoke checks rather than the complete acceptance suite.
 
-### Browser screen sharing and host permission scope
+### Supported meeting controls
 
-Chrome on Android and Safari on iOS do not expose supported `getDisplayMedia()` screen capture. These browsers can receive shared screens; starting a screen share requires a supported desktop browser. The app detects capture support and explains this limitation instead of presenting it as a failed call. See [MDN browser compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/MediaDevices.json).
-
-Host settings are live-room state and reset when the room closes or the API restarts. The backend authorizes policy changes, admission, locking and chat/name events; the application clients stop disallowed media tracks. Because WebRTC media travels directly between peers, this demo cannot inspect or suppress media sent by a modified client as a server-routed conferencing service could.
+The current interface keeps camera/microphone, participants, invitation, leave, end-for-everyone, host mute-all and removal functional. Screen sharing and advanced host policy are preview-only. Backend compatibility handlers are retained, but are not advertised as supported product features.
