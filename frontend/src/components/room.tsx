@@ -385,6 +385,15 @@ export default function Room({
                   ? "Start Meeting"
                   : "Join Meeting"}
             </button>
+            {media.busy && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={media.disableMedia}
+              >
+                Continue without audio/video
+              </button>
+            )}
             <p className="form-hint">
               Your microphone and camera settings above will be used when you
               join.

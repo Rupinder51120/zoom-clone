@@ -59,7 +59,7 @@ export default function AuthForm({ signup = false }: { signup?: boolean }) {
             {[
               "Create and schedule meetings",
               "Share invitations with your team",
-              "Join with audio, video, and screen sharing",
+              "Join with browser audio and video",
             ].map((text) => (
               <p key={text}>
                 <CheckCircle2 size={20} />

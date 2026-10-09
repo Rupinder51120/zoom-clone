@@ -5,7 +5,7 @@ A full-stack meeting application inspired by the supplied Zoom UI: create meetin
 - **Live demo:** [zoom-clone-bice-mu.vercel.app](https://zoom-clone-bice-mu.vercel.app/)
 - **Repository:** [Rupinder51120/zoom-clone](https://github.com/Rupinder51120/zoom-clone)
 - **Stack:** Next.js 16 · TypeScript · Tailwind CSS 4 · FastAPI · SQLAlchemy · Alembic · SQLite · WebRTC · WebSockets
-- **Verification:** 56 included backend tests and 16 current-scope browser tests passed locally on 9 October 2026. Automated browser calls use synthetic media devices; all implemented features were also manually tested on physical devices by the project owner.
+- **Verification:** 56 included backend tests and 19 current-scope browser tests passed locally on 9 October 2026. Automated browser calls use synthetic media devices; all implemented features were also manually tested on physical devices by the project owner.
 - **Checklist:** [corefeatures.md](corefeatures.md) · **Deployment guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## Try the demo
@@ -211,7 +211,7 @@ Validation on **9 October 2026**:
 | Check | Result |
 | --- | --- |
 | Included backend regression tests | 56 passed |
-| Current-scope browser acceptance | 16 passed, including synthetic peer media and host controls |
+| Current-scope browser acceptance | 19 passed, including pending-permission recovery, synthetic peer media and host controls |
 | Frontend production build / TypeScript / Prettier | Passed |
 | Backend Ruff lint / formatting | Passed |
 | Disposable SQLite migrations, seed, health and authorization smoke check | Passed |
@@ -243,7 +243,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The browser command builds the app, starts temporary services on **8004/3004**, runs 16 cases and stops the services. Keep those ports free and stop your local production frontend before rebuilding. Its SQLite database is disposable; existing development data is preserved. CI runs both included suites plus migration/API smoke checks.
+The browser command builds the app, starts temporary services on **8004/3004**, runs 19 cases and stops the services. Keep those ports free and stop your local production frontend before rebuilding. Its SQLite database is disposable; existing development data is preserved. CI runs both included suites plus migration/API smoke checks.
 
 ## Deployment
 

@@ -63,10 +63,12 @@ export function useMedia(initialVideo: boolean, initialAudio = true) {
               audio: constraints.audio,
               video: false,
             });
-            setError(
-              "Camera unavailable. Your microphone is ready; you can join with video off.",
-            );
+            if (attempt === generation.current)
+              setError(
+                "Camera unavailable. Your microphone is ready; you can join with video off.",
+              );
           } catch {
+            if (attempt !== generation.current) return;
             setError(
               "Camera or microphone permission was denied or no device is available. You can join with both off.",
             );
@@ -125,6 +127,18 @@ export function useMedia(initialVideo: boolean, initialAudio = true) {
     streamRef.current?.getAudioTracks().forEach((t) => (t.enabled = false));
     setAudio(false);
   }, []);
+  const disableMedia = useCallback(() => {
+    // Permission prompts cannot be aborted. Ignore their eventual result and
+    // stop any late tracks instead of turning devices on after the user skips.
+    generation.current++;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setStream(null);
+    setAudio(false);
+    setVideo(false);
+    setBusy(false);
+    setError("");
+  }, []);
   async function selectDevice(kind: "audio" | "video", id: string) {
     if (kind === "audio") setAudioId(id);
     else setVideoId(id);
@@ -147,6 +161,7 @@ export function useMedia(initialVideo: boolean, initialAudio = true) {
     toggleAudio,
     toggleVideo,
     mute,
+    disableMedia,
     selectDevice,
     retry: () => acquire(initialVideo, initialAudio, audioId, videoId),
   };
