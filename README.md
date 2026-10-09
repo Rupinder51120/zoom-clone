@@ -15,6 +15,7 @@ references, with a navigation rail, centered meeting actions, modal Join/Schedul
 
 ## Contents
 
+0. [Screenshots and responsive layouts](#screenshots-and-responsive-layouts)
 1. [Features](#features)
 2. [Tech stack](#tech-stack)
 3. [Running it locally](#running-it-locally)
@@ -26,6 +27,45 @@ references, with a navigation rail, centered meeting actions, modal Join/Schedul
 9. [Design decisions](#design-decisions)
 10. [Assumptions](#assumptions)
 11. [Known limitations and future work](#known-limitations-and-future-work)
+
+---
+
+## Screenshots and responsive layouts
+
+Actual application screenshots from local browser verification. The web interface adapts to **desktop, tablet and mobile** and follows the system light/dark appearance. These are browser viewport captures, not evidence of physical-device call testing.
+
+### Desktop web · 1440 px
+
+| Light appearance | Dark appearance |
+|---|---|
+| ![ZOOM-CLONE desktop dashboard in light theme](assets/screenshots/dashboard-desktop-light.png) | ![ZOOM-CLONE desktop dashboard in dark theme](assets/screenshots/dashboard-desktop-dark.png) |
+
+### Tablet · 768 px
+
+The navigation rail remains visible while meeting cards and actions fit the narrower content area.
+
+| Light appearance | Dark appearance |
+|---|---|
+| ![ZOOM-CLONE tablet dashboard in light theme](assets/screenshots/dashboard-tablet-light.png) | ![ZOOM-CLONE tablet dashboard in dark theme](assets/screenshots/dashboard-tablet-dark.png) |
+
+### Mobile · 390 px
+
+Navigation moves above the content, meeting actions wrap, and meeting cards stack vertically.
+
+| Light appearance | Dark appearance |
+|---|---|
+| ![ZOOM-CLONE mobile dashboard in light theme](assets/screenshots/dashboard-mobile-light.png) | ![ZOOM-CLONE mobile dashboard in dark theme](assets/screenshots/dashboard-mobile-dark.png) |
+
+<details>
+<summary>Meeting room preview</summary>
+
+![ZOOM-CLONE meeting room with camera off and call controls](assets/screenshots/meeting-room-dark.png)
+
+Camera-off room showing participant initials and the audio/video, participants, screen sharing, chat, raise hand, reactions and leave controls.
+
+</details>
+
+Sample data varies between captures and the live demo. Unimplemented product entries shown in the navigation remain preview placeholders; see the feature list below.
 
 ---
 
