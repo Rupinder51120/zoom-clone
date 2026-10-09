@@ -156,6 +156,18 @@ Actual application screenshots. Tablet and mobile views are available in the dro
 
 **Preview only:** rename, meeting lock, advanced permissions, profile preferences, calendar integrations/export, AI, recording, breakout rooms and upgrades. These controls do not perform their advertised actions.
 
+## For evaluators: where to find the evidence
+
+| Criterion | Where to look |
+| --- | --- |
+| Functionality | [Feature checklist](corefeatures.md); [20 browser tests](frontend/tests/regression/) and [57 backend tests](backend/tests/regression/) cover core workflows, optional authentication and host controls. [Collaboration tests](frontend/tests/regression/collaboration.spec.ts) cover admission, chat, reactions, hands and synthetic screen sharing. |
+| UI/UX | [Screenshots](#screenshots); [dashboard](frontend/src/components/dashboard.tsx), [meeting room](frontend/src/components/room.tsx) and [workspace styles](frontend/src/app/workspace.css). [Responsive tests](frontend/tests/regression/workflows.spec.ts) cover light/dark layouts at mobile, tablet and desktop widths; [accessibility tests](frontend/tests/regression/accessibility.spec.ts) check keyboard focus and reduced motion. |
+| Database design | [Schema](#database-schema): four tables with foreign keys, unique meeting codes and hashed tokens. See [models](backend/app/models.py), [Alembic migrations](backend/migrations/versions/), [seed data](backend/app/seed.py) and [migration/API smoke checks](backend/ci/verify.py). |
+| Backend / API design | [API overview](#api-overview), [FastAPI routes and room events](backend/app/main.py), [meeting service](backend/app/services/meetings.py) and [request validation](backend/app/schemas.py). [Admission regressions](backend/tests/regression/test_admission_regressions.py) and [collaboration tests](backend/tests/regression/test_collaboration.py) check authorization. |
+| Code quality | Strict [TypeScript configuration](frontend/tsconfig.json), Prettier, Ruff, production build and both regression suites run in [GitHub Actions](.github/workflows/ci.yml). |
+| Code modularity | [UI components](frontend/src/components/), [media hook](frontend/src/hooks/use-media.ts), [call hook](frontend/src/hooks/use-call.ts), [meeting service](backend/app/services/meetings.py), [auth](backend/app/auth.py) and [room registry](backend/app/rooms.py) separate responsibilities. |
+| Code understanding | [Architecture and design decisions](#tech-stack-and-architecture), [schema](#database-schema) and [assumptions](#assumptions-and-limitations) explain the proxy, host authorization, persistence and single-process room model. |
+
 ## Tech stack and architecture
 
 | Layer | Technology / purpose |
@@ -260,6 +272,10 @@ GitHub Actions runs frontend checks and backend smoke verification. Optional Act
 - One API process is intentional. Restarting loses active room state; persisted meeting metadata remains.
 - Zoom-style typography uses native system fonts. Exact proprietary font assets and animation timing are not claimed.
 - Out-of-scope products remain explicit placeholders. No recording, AI or billing support is claimed. Screen capture requires a supported browser; unsupported browsers can still receive shared screens.
+
+## Submission notes
+
+No login is required: the app opens a shared default demo workspace, with optional signup/signin. SQLite is seeded with a demo user and sample upcoming/completed meetings; meetings created by visitors are stored in the database. Core meeting workflows and bonus host controls are functional. Chat, reactions, raised hands, desktop screen sharing and optional waiting-room admission are also implemented. Unrelated Zoom products are labeled previews. Screen capture depends on browser support; mobile users can view desktop shares. The backend uses one process and persistent SQLite storage; restarting clears active room state but preserves meeting records.
 
 ## Submission deliverables
 
