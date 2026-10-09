@@ -1,341 +1,970 @@
 .page {
-  background: var(--background, #fff);
-  color: var(--foreground, #202123);
-  min-height: 100dvh;
+  background: #fff;
+  color: #101338;
   font-family: Arial, sans-serif;
 }
-.utility {
-  background: #00031f;
-  color: white;
-  display: flex;
-  justify-content: flex-end;
-  gap: 26px;
-  padding: 12px 5%;
-  font-size: 13px;
+.page a {
+  text-decoration: none;
 }
-.utility button,
-.products button,
-.footer button {
-  background: none;
-  border: 0;
-  color: inherit;
+.page button {
   cursor: pointer;
   font: inherit;
 }
+.page button:focus-visible,
+.page a:focus-visible,
+.page summary:focus-visible {
+  outline: 3px solid #89b5ff;
+  outline-offset: 4px;
+}
+.heroBackground {
+  color: white;
+  background: radial-gradient(
+    ellipse at 53% 100%,
+    #82b0ff 0%,
+    #3863d6 32%,
+    #0b1a52 62%,
+    #03071f 100%
+  );
+}
 .header {
-  padding: 24px 4%;
+  margin: 0 24px;
+  min-height: 78px;
+  border-bottom: 1px solid #ffffff32;
   display: flex;
   align-items: center;
-  gap: 32px;
-  border-bottom: 1px solid #dfe3eb;
+  justify-content: space-between;
+  gap: 24px;
 }
 .brand {
+  color: inherit;
+  font-size: 28px;
   font-weight: 800;
-  color: #0b5cff;
-  font-size: 24px;
-  letter-spacing: -1px;
-  text-decoration: none;
+  letter-spacing: -1.4px;
   white-space: nowrap;
 }
-.products {
+.header nav {
   display: flex;
-  gap: 23px;
-  flex: 1;
+  gap: 25px;
+  align-items: center;
   font-size: 14px;
 }
-.products button {
-  display: flex;
-  align-items: center;
+.header button,
+.subnav button {
+  background: none;
+  color: inherit;
+  border: 0;
+  display: inline-flex;
   gap: 5px;
-}
-.actions,
-.heroActions {
-  display: flex;
-  gap: 12px;
   align-items: center;
 }
-.primary,
-.outline {
+.header a,
+.subnav a {
+  color: inherit;
+}
+.blueButton,
+.whiteButton,
+.navyButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 13px 22px;
-  border-radius: 30px;
-  text-decoration: none;
+  padding: 14px 23px;
+  border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
+  border: 0;
 }
-.primary {
-  background: #0b5cff;
+.page .blueButton {
+  background: #2858f7;
   color: white;
-  border: 1px solid #0b5cff;
 }
-.outline {
-  border: 1px solid #0b5cff;
-  color: #0b5cff;
+.page .whiteButton {
+  background: #eef2ff;
+  color: #101338;
+}
+.page .navyButton {
+  background: #030b39;
+  color: white;
+}
+.textButton {
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 12px;
+}
+.subnav {
+  padding: 23px 24px;
+  display: flex;
+  gap: 27px;
+  align-items: center;
+  font-size: 14px;
+}
+.subnav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.separator {
+  height: 16px;
+  width: 1px;
+  background: #ffffff5c;
+}
+.meetMenu {
+  position: relative;
+}
+.meetMenu summary {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+.meetMenu > div {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: white;
+  color: #101338;
+  width: 180px;
+  z-index: 10;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px #0004;
+}
+.meetMenu div a {
+  display: block;
+  padding: 10px;
 }
 .hero {
-  background: #f2f6ff;
-  padding: 90px 6% 110px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 65px;
-  align-items: center;
+  text-align: center;
+  padding: 65px 24px 0;
+  overflow: hidden;
 }
-.eyebrow {
-  display: block;
-  font-weight: 600;
-  color: #0b5cff;
-  margin-bottom: 20px;
+.hero h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(36px, 4.05vw, 61px);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  max-width: 1130px;
+  margin: 0 auto 35px;
 }
-.copy h1 {
-  font-size: clamp(42px, 4.5vw, 70px);
-  line-height: 1.06;
-  font-weight: 600;
-  letter-spacing: -3px;
-  margin: 0 0 25px;
-  color: #00053d;
-}
-.copy em {
-  color: #0b5cff;
-  font-style: normal;
-}
-.copy p {
-  font-size: 19px;
+.hero > p {
+  font-size: 17px;
   line-height: 1.6;
-  max-width: 490px;
-  color: #424b62;
-  margin-bottom: 28px;
+  color: #e0e8ff;
+  margin: 0 auto 29px;
+  max-width: 700px;
 }
-.copy small {
+.heroActions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.loginNote {
   display: block;
-  margin-top: 20px;
-  color: #61697e;
+  color: #e0e8ff;
+  margin-top: 15px;
+  font-size: 12px;
+}
+.workspacePreview {
+  height: 480px;
+  width: min(1100px, 100%);
+  position: relative;
+  margin: 55px auto 0;
+  text-align: left;
+  color: #101338;
+}
+.scheduleCard {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 205px;
+  background: white;
+  border-top: 5px solid #aa82eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px #0002;
+  padding: 20px 16px;
+  z-index: 2;
   font-size: 13px;
 }
-.preview {
-  position: relative;
-  background: #222427;
-  border-radius: 18px;
-  padding: 18px;
+.scheduleCard strong {
+  display: block;
+  margin: 14px 0;
+  font-size: 15px;
+}
+.scheduleCard p {
+  margin: 15px 0;
+}
+.scheduleCard a {
+  color: #2858f7;
+}
+.people {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.people span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #3767bc;
   color: white;
-  box-shadow: 0 20px 50px #00052a22;
-  transform: rotate(-2deg);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+}
+.cardLine {
+  display: block;
+  height: 1px;
+  background: #e4e7ef;
+  margin-top: 20px;
+}
+.summary {
+  position: absolute;
+  left: 39%;
+  top: 35px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 5px 15px #0001;
+  z-index: 3;
+  font-size: 18px;
+  white-space: nowrap;
+}
+.summary svg {
+  color: #4564fa;
+}
+.summary small {
+  font-size: 10px;
+  color: #64667a;
+}
+.document {
+  font-size: 13px;
+  background: #e8ecff;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.meetingWindow {
+  position: absolute;
+  top: 110px;
+  left: 17%;
+  width: 66%;
+  background: #2848a7;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 18px 45px #07113b44;
 }
 .previewTop {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 13px;
-  padding-bottom: 15px;
-}
-.previewTop span {
-  margin-left: auto;
-  color: #c2c6ce;
+  justify-content: space-between;
+  padding: 6px 4px 10px;
+  color: white;
   font-size: 11px;
 }
 .tiles {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
 }
 .tile {
-  aspect-ratio: 1.3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 230px;
   position: relative;
-  border-radius: 8px;
-}
-.tile > span {
-  width: 80px;
-  height: 80px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 5px;
+}
+.avatar {
+  width: 85px;
+  height: 85px;
   background: #ffffff22;
-  font-size: 34px;
+  border-radius: 50%;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
 }
 .tile small {
   position: absolute;
+  bottom: 9px;
   left: 8px;
-  bottom: 8px;
-  background: #0006;
-  padding: 3px 7px;
+  color: white;
+  background: #0005;
+  padding: 4px 7px;
   border-radius: 4px;
+  font-size: 12px;
 }
-.orange {
-  background: #be650f;
+.color0 {
+  background: #b67c4b;
 }
-.blue {
-  background: #275baa;
+.color1 {
+  background: #507ba9;
 }
-.purple {
-  background: #7563a0;
+.color2 {
+  background: #73699d;
 }
-.green {
-  background: #40756f;
+.color3 {
+  background: #50867f;
 }
 .previewToolbar {
-  padding: 18px 10px 0;
+  color: white;
+  padding: 16px 12px 10px;
   display: flex;
-  gap: 24px;
+  gap: 25px;
   align-items: center;
 }
 .previewToolbar span {
   margin-left: auto;
-  font-size: 11px;
-  color: #c2c6ce;
+  font-size: 10px;
 }
-.badge {
+.chatCard {
   position: absolute;
-  bottom: -34px;
-  right: -20px;
+  width: 215px;
+  right: 0;
+  top: 165px;
+  z-index: 2;
+  padding: 18px;
   background: white;
-  color: #00053d;
-  padding: 19px 25px;
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  border-radius: 14px;
-  box-shadow: 0 8px 25px #0002;
-  font-size: 14px;
-  transform: rotate(2deg);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px #0002;
+  font-size: 12px;
 }
-.meetings {
-  padding: 80px 6%;
+.chatCard strong {
+  display: block;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 14px;
+}
+.chatCard div {
+  margin-top: 15px;
+}
+.chatCard b {
+  font-size: 12px;
+}
+.chatCard p {
+  margin-top: 5px;
+  color: #565b6e;
+}
+.teamStrip {
+  text-align: center;
+  padding: 48px 24px 55px;
+}
+.teamStrip h2 {
+  font-size: 19px;
+  font-weight: 400;
+}
+.teamStrip > div {
+  display: flex;
+  justify-content: space-around;
+  max-width: 1080px;
+  margin: 35px auto 0;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.teamStrip span {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  font-size: 32px;
+  color: #484c60;
+}
+.benefits,
+.productSection,
+.pricing,
+.faq {
+  padding: 70px 6%;
+  scroll-margin-top: 20px;
+}
+.page h2 {
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  text-align: center;
+  margin: 0 0 45px;
+}
+.teamStrip h2 {
+  font-size: 19px;
+  margin: 0;
+  letter-spacing: 0;
+}
+.benefitGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 50px 70px;
+  max-width: 1180px;
+  margin: auto;
   text-align: center;
 }
-.meetings h2 {
-  font-size: 36px;
-  font-weight: 600;
-  letter-spacing: -1px;
-  margin-bottom: 40px;
+.benefitGrid svg {
+  color: #2858f7;
+  margin: auto;
 }
-.features {
+.benefitGrid h3 {
+  font-size: 21px;
+  margin: 20px 0 12px;
+}
+.benefitGrid p {
+  color: #5e6276;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.lifecycle {
+  background: #eef3ff;
+  padding: 70px 6%;
+}
+.steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 25px;
-  text-align: left;
+  max-width: 1000px;
+  margin: auto;
 }
-.features a {
-  padding: 30px;
-  border: 1px solid #dfe3eb;
-  border-radius: 16px;
-  color: inherit;
-  text-decoration: none;
+.steps a {
+  background: white;
+  border-radius: 18px;
+  padding: 35px;
+  color: #101338;
+  text-align: center;
 }
-.features svg {
-  color: #0b5cff;
+.steps svg {
+  color: #2858f7;
+  margin: auto;
 }
-.features h3 {
-  font-size: 23px;
-  margin: 20px 0 12px;
+.steps span {
+  display: block;
+  color: #65708b;
+  margin: 20px 0 10px;
 }
-.features p {
-  line-height: 1.6;
-  min-height: 50px;
+.steps strong {
+  font-size: 22px;
+}
+.eyebrow {
+  color: #4565cc;
+  display: block;
+  text-align: center;
+  font-size: 15px;
   margin-bottom: 20px;
 }
+.productTabs {
+  display: flex;
+  justify-content: center;
+  gap: 45px;
+  border-bottom: 1px solid #d5dbea;
+  padding: 20px;
+  margin-bottom: 45px;
+  flex-wrap: wrap;
+}
+.productTabs a {
+  color: #2858f7;
+  border-bottom: 3px solid #2858f7;
+  padding-bottom: 12px;
+}
+.productTabs button {
+  border: 0;
+  background: none;
+  color: inherit;
+}
+.productContent {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 55px;
+  align-items: center;
+  max-width: 1250px;
+  margin: auto;
+}
+.productContent h3 {
+  font-size: 30px;
+}
+.productContent p,
+.productContent li {
+  line-height: 1.7;
+  color: #555b70;
+}
+.productContent ul {
+  padding-left: 20px;
+  margin: 20px 0 30px;
+}
+.compactPreview {
+  background: #e4edff;
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 360px;
+}
+.compactPreview .workspacePreview {
+  width: 650px;
+  max-width: 100%;
+  height: 330px;
+  margin: 0;
+}
+.compactPreview .scheduleCard,
+.compactPreview .chatCard {
+  display: none;
+}
+.compactPreview .summary {
+  left: 10%;
+  top: 35px;
+  font-size: 13px;
+}
+.compactPreview .summary small {
+  display: none;
+}
+.compactPreview .document {
+  font-size: 10px;
+}
+.compactPreview .meetingWindow {
+  left: 8%;
+  top: 110px;
+  width: 84%;
+}
+.compactPreview .tile {
+  height: 140px;
+}
+.compactPreview .avatar {
+  width: 50px;
+  height: 50px;
+  font-size: 25px;
+}
+.aiSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  align-items: center;
+  padding: 80px 8%;
+  background: #f3f1ff;
+}
+.aiSection h2,
+.aiSection .eyebrow {
+  text-align: left;
+}
+.aiSection p {
+  line-height: 1.7;
+  color: #5e6276;
+  margin-bottom: 25px;
+}
+.aiArt {
+  background: white;
+  border-radius: 24px;
+  padding: 50px;
+  box-shadow: 0 20px 40px #30205b12;
+}
+.aiArt svg {
+  color: #8462d7;
+}
+.aiArt > div {
+  margin-top: 20px;
+  font-size: 24px;
+}
+.aiArt span {
+  display: block;
+  font-size: 12px;
+  color: #797a8c;
+  margin-top: 7px;
+}
+.noteLines i {
+  display: block;
+  height: 10px;
+  margin: 16px 0;
+  background: #eeeafa;
+  border-radius: 5px;
+}
+.noteLines i:last-child {
+  width: 60%;
+}
+.integration {
+  padding: 80px 6%;
+  text-align: center;
+}
+.integrationTiles {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.integrationTiles button {
+  background: #f0f3ff;
+  border: 1px solid #e0e5f0;
+  padding: 30px;
+  border-radius: 18px;
+  color: #101338;
+}
+.pricing {
+  background: #f6f8fc;
+}
+.pricing > p {
+  text-align: center;
+  color: #62677d;
+  margin: -20px 0 40px;
+}
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  max-width: 1180px;
+  margin: auto;
+}
+.planGrid article {
+  background: white;
+  border: 1px solid #d7ddeb;
+  border-radius: 18px;
+  padding: 30px;
+}
+.planGrid h3 {
+  font-size: 26px;
+  margin-bottom: 25px;
+}
+.planGrid strong {
+  font-size: 25px;
+}
+.planGrid p {
+  line-height: 1.6;
+  min-height: 75px;
+  color: #5e6276;
+  margin-top: 20px;
+}
+.planGrid ul {
+  border-top: 1px solid #e2e7ef;
+  margin-top: 30px;
+  padding: 22px 0 0 18px;
+  line-height: 2.2;
+  font-size: 14px;
+}
+.cta {
+  background: #101b58;
+  color: white;
+  text-align: center;
+  padding: 75px 24px;
+}
+.cta a {
+  margin: 0 8px;
+}
+.faq {
+  max-width: 1100px;
+  margin: auto;
+}
+.faq details {
+  border-top: 1px solid #dfe3ed;
+  padding: 25px 0;
+}
+.faq summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  cursor: pointer;
+  font-size: 21px;
+}
+.faq p {
+  color: #62677d;
+  line-height: 1.7;
+  margin-top: 20px;
+}
 .footer {
-  border-top: 1px solid #dfe3eb;
-  padding: 30px 5%;
+  background: #05091f;
+  color: white;
+  padding: 60px 5% 25px;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 35px;
+  font-size: 13px;
+}
+.footer h3 {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+.footer p {
+  margin: 20px 0;
+  color: #bac1d5;
+}
+.footer button {
+  background: none;
+  border: 0;
+  color: #bac1d5;
+  display: block;
+  padding: 8px 0;
+  text-align: left;
+}
+.footerBottom {
+  grid-column: 1/-1;
   display: flex;
   gap: 25px;
   align-items: center;
   flex-wrap: wrap;
-  font-size: 13px;
+  border-top: 1px solid #ffffff25;
+  padding-top: 25px;
+  margin-top: 20px;
 }
-.footer span {
+.footerBottom span {
   margin-right: auto;
+  color: #bac1d5;
+}
+.footer a {
+  color: inherit;
 }
 @media (prefers-color-scheme: dark) {
   .page {
-    background: #181a1d;
-    color: #eceef3;
+    background: #171c2b;
+    color: #edf0ff;
   }
-  .hero {
-    background: #202a3d;
+  .benefitGrid p,
+  .productContent p,
+  .productContent li,
+  .aiSection p,
+  .faq p,
+  .pricing > p {
+    color: #b7bfd5;
   }
-  .copy h1,
-  .copy p,
-  .copy small {
-    color: #eceef3;
+  .teamStrip span {
+    color: #bac4e4;
   }
-  .copy em,
-  .eyebrow,
-  .brand {
-    color: #78aaff;
+  .lifecycle,
+  .pricing {
+    background: #1d263f;
   }
-  .header,
-  .footer,
-  .features a {
-    border-color: #454954;
+  .steps a,
+  .planGrid article {
+    background: #25314b;
+    color: #edf0ff;
+    border-color: #394963;
   }
-  .outline {
-    color: #78aaff;
-    border-color: #78aaff;
+  .planGrid p {
+    color: #bac4e4;
+  }
+  .aiSection {
+    background: #28253e;
+  }
+  .aiArt {
+    background: #363249;
+  }
+  .noteLines i {
+    background: #514969;
+  }
+  .integrationTiles button {
+    background: #25314b;
+    color: #edf0ff;
+    border-color: #394963;
+  }
+  .eyebrow {
+    color: #99b7ff;
   }
 }
-@media (max-width: 1100px) {
-  .products {
+@media (max-width: 1000px) {
+  .header nav {
+    gap: 14px;
+  }
+  .header nav > button:first-child,
+  .header nav > button:nth-child(2) {
     display: none;
   }
-  .header {
-    justify-content: space-between;
+  .header .brand {
+    font-size: 21px;
   }
-  .hero {
-    gap: 30px;
+  .chatCard {
+    display: none;
   }
-  .badge {
-    right: 0;
+  .meetingWindow {
+    width: 80%;
+    left: 16%;
+  }
+  .summary {
+    left: 28%;
+  }
+  .benefitGrid {
+    gap: 40px;
+  }
+  .productContent {
+    gap: 25px;
+  }
+  .footer {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 @media (max-width: 700px) {
   .header {
     flex-wrap: wrap;
-    padding: 20px;
-    gap: 18px;
+    margin: 0 16px;
+    padding: 20px 0;
+    gap: 20px;
   }
-  .brand {
-    font-size: 21px;
-  }
-  .actions {
+  .header nav {
     flex-wrap: wrap;
-  }
-  .primary,
-  .outline {
-    padding: 11px 16px;
+    justify-content: flex-start;
     font-size: 13px;
+    gap: 15px;
+  }
+  .header .brand {
+    font-size: 25px;
+  }
+  .header nav > .whiteButton,
+  .header nav > button:last-child {
+    display: none;
+  }
+  .subnav {
+    gap: 15px;
+    padding: 20px 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
   }
   .hero {
+    padding: 40px 16px 0;
+  }
+  .hero h1 {
+    font-size: 39px;
+    letter-spacing: -1px;
+  }
+  .hero > p {
+    font-size: 15px;
+  }
+  .hero > p br {
+    display: none;
+  }
+  .blueButton,
+  .whiteButton,
+  .navyButton {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  .workspacePreview {
+    height: 340px;
+    margin-top: 35px;
+  }
+  .scheduleCard,
+  .chatCard {
+    display: none;
+  }
+  .summary {
+    left: 0;
+    top: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    gap: 6px;
+    padding: 12px;
+    white-space: normal;
+  }
+  .summary small {
+    display: none;
+  }
+  .document {
+    font-size: 10px;
+    padding: 6px;
+  }
+  .meetingWindow {
+    left: 0;
+    top: 85px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tile {
+    height: 90px;
+  }
+  .avatar {
+    width: 45px;
+    height: 45px;
+    font-size: 23px;
+  }
+  .tile small {
+    font-size: 10px;
+    bottom: 4px;
+    left: 4px;
+    padding: 2px 5px;
+  }
+  .previewToolbar {
+    gap: 18px;
+    padding: 10px 4px 4px;
+  }
+  .teamStrip {
+    padding: 35px 20px;
+  }
+  .teamStrip span {
+    font-size: 24px;
+  }
+  .benefits,
+  .productSection,
+  .pricing,
+  .faq,
+  .integration {
+    padding: 50px 22px;
+  }
+  .benefitGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 35px 20px;
+  }
+  .benefitGrid h3 {
+    font-size: 18px;
+  }
+  .benefitGrid p {
+    font-size: 14px;
+  }
+  .lifecycle {
+    padding: 50px 22px;
+  }
+  .steps {
     grid-template-columns: 1fr;
-    padding: 50px 24px 75px;
-    gap: 45px;
+    gap: 15px;
   }
-  .copy h1 {
-    letter-spacing: -2px;
+  .steps a {
+    padding: 25px;
   }
-  .copy p {
-    font-size: 17px;
+  .productTabs {
+    gap: 20px;
+    padding: 10px 0;
+    font-size: 14px;
   }
-  .preview {
-    transform: none;
-  }
-  .badge {
-    transform: none;
-  }
-  .features {
+  .productContent,
+  .aiSection {
     grid-template-columns: 1fr;
   }
-  .meetings {
-    padding: 50px 24px;
+  .compactPreview {
+    min-height: 320px;
   }
-  .meetings h2 {
-    font-size: 29px;
+  .compactPreview .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .compactPreview .tile {
+    height: 75px;
+  }
+  .compactPreview .meetingWindow {
+    top: 95px;
+  }
+  .compactPreview .summary {
+    left: 5%;
+    width: 90%;
+  }
+  .aiSection {
+    padding: 50px 22px;
+    gap: 40px;
+  }
+  .aiArt {
+    padding: 30px;
+  }
+  .planGrid {
+    grid-template-columns: 1fr;
+  }
+  .planGrid p {
+    min-height: 0;
+  }
+  .faq summary {
+    font-size: 18px;
   }
   .footer {
-    align-items: flex-start;
+    grid-template-columns: 1fr 1fr;
+    padding: 45px 22px;
+    gap: 30px;
+  }
+  .footer > div:first-child {
+    grid-column: 1/-1;
+  }
+  .footerBottom {
+    gap: 15px;
+    font-size: 12px;
   }
 }
